@@ -9,7 +9,7 @@ import (
 	"github.com/netrixframework/netrix/config"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
-	"github.com/netrixframework/tendermint-testing/testcases/invariant"
+	"github.com/netrixframework/tendermint-testing/testcases/rskip"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
@@ -22,7 +22,7 @@ func main() {
 
 	server, err := testlib.NewTestingServer(
 		&config.Config{
-			APIServerAddr: "10.0.0.8:7074",
+			APIServerAddr: "172.23.37.208:7074",
 			NumReplicas:   sysParams.N,
 			LogConfig: config.LogConfig{
 				Format: "json",
@@ -32,7 +32,7 @@ func main() {
 		&util.TMessageParser{},
 		[]*testlib.TestCase{
 			// testcases.DummyTestCase(),
-			// rskip.RoundSkip(sysParams, 1, 2),
+			rskip.RoundSkip(sysParams, 1, 2),
 			// rskip.BlockVotes(sysParams),
 			// rskip.ExpectNewRound(sysParams),
 			// rskip.CommitAfterRoundSkip(sysParams),
@@ -52,7 +52,7 @@ func main() {
 			// byzantine.HigherRound(sysParams),
 			// byzantine.CrashReplica(sysParams),
 			// byzantine.ForeverLaggingReplica(sysParams),
-			invariant.PrecommitsInvariant(sysParams),
+			// invariant.PrecommitsInvariant(sysParams),
 		},
 	)
 
