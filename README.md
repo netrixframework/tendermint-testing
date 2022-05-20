@@ -122,3 +122,22 @@ The expected results from the tests are as follows:
     - ForeverLaggingReplica
 - **Flaky (fails sometimes)**
     - QuorumPrecommits
+
+## Common issues
+### Permission denied on second run
+If you do not use rootless docker, running the nodes may create files owned by `root`, and on a second run you will see errors such as:
+
+```
+rm: cannot remove '/home/daan/workspace/tendermint-pct-instrumentation/build/node0/data/cs.wal': Permission denied
+```
+
+As a workaround, you can make this change to `../tendermint-pct-instrumentation/Makefile`:
+
+```diff
+    # Stop testnet
+    localnet-stop:
+    docker-compose down
+-   rm -rf $(BUILDDIR)/node*
++   docker run --rm -v $(BUILDDIR):/tendermint alpine rm -rf /tendermint/node0 /tendermint/node1 /tendermint/node2 /tendermint/node3
+    .PHONY: localnet-stop
+```
