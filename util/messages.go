@@ -38,24 +38,18 @@ const (
 )
 
 type TMessage struct {
-	ChannelID uint16          `json:"chan_id"`
-	MsgB      []byte          `json:"msg"`
-	From      types.ReplicaID `json:"from"`
-	To        types.ReplicaID `json:"to"`
-	Type      MessageType     `json:"-"`
-	Data      *tmsg.Message   `json:"-"`
+	MsgB []byte        `json:"msg"`
+	Type MessageType   `json:"-"`
+	Data *tmsg.Message `json:"-"`
 }
 
 var _ types.ParsedMessage = &TMessage{}
 
 func (t *TMessage) Clone() types.ParsedMessage {
 	return &TMessage{
-		ChannelID: t.ChannelID,
-		MsgB:      t.MsgB,
-		From:      t.From,
-		To:        t.To,
-		Type:      t.Type,
-		Data:      t.Data,
+		MsgB: t.MsgB,
+		Type: t.Type,
+		Data: t.Data,
 	}
 }
 
@@ -137,25 +131,16 @@ type TMessageParser struct {
 }
 
 func (p *TMessageParser) Parse(m []byte) (types.ParsedMessage, error) {
-	var cMsg TMessage
-	err := json.Unmarshal(m, &cMsg)
-	if err != nil {
-		return &cMsg, err
-	}
-	chid := cMsg.ChannelID
-	if chid < 0x20 || chid > 0x23 {
-		cMsg.Type = "None"
-		return &cMsg, nil
-	}
 
 	msg := proto.Clone(new(tmsg.Message))
 	msg.Reset()
 
-	if err := proto.Unmarshal(cMsg.MsgB, msg); err != nil {
+	cMsg := &TMessage{}
+	if err := proto.Unmarshal(m, msg); err != nil {
 		// log.Debug("Error unmarshalling")
 		cMsg.Type = None
 		cMsg.Data = nil
-		return &cMsg, nil
+		return cMsg, nil
 	}
 
 	tMsg := msg.(*tmsg.Message)
@@ -197,7 +182,7 @@ func (p *TMessageParser) Parse(m []byte) (types.ParsedMessage, error) {
 	}
 
 	// log.Debug(fmt.Sprintf("Received message from: %s, with contents: %s", cMsg.From, cMsg.Msg.String()))
-	return &cMsg, err
+	return cMsg, nil
 }
 
 func GetMessageFromEvent(e *types.Event, ctx *testlib.Context) (*TMessage, bool) {

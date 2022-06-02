@@ -109,7 +109,10 @@ func getPartition(c *testlib.Context) (*util.Partition, bool) {
 
 func IsMessageFromPart(partS string) testlib.Condition {
 	return func(e *types.Event, c *testlib.Context) bool {
-		m, ok := util.GetMessageFromEvent(e, c)
+		if !e.IsMessageSend() && !e.IsMessageReceive() {
+			return false
+		}
+		m, ok := c.GetMessage(e)
 		if !ok {
 			return false
 		}
@@ -127,7 +130,10 @@ func IsMessageFromPart(partS string) testlib.Condition {
 
 func IsMessageToPart(partS string) testlib.Condition {
 	return func(e *types.Event, c *testlib.Context) bool {
-		m, ok := util.GetMessageFromEvent(e, c)
+		if !e.IsMessageSend() && !e.IsMessageReceive() {
+			return false
+		}
+		m, ok := c.GetMessage(e)
 		if !ok {
 			return false
 		}

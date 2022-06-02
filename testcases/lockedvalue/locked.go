@@ -16,7 +16,7 @@ func changeProposalToNil(e *types.Event, c *testlib.Context) []*types.Message {
 	if !ok {
 		return []*types.Message{}
 	}
-	replica, _ := c.Replicas.Get(tMsg.From)
+	replica, _ := c.Replicas.Get(message.From)
 	newProp, err := util.ChangeProposalBlockIDToNil(replica, tMsg)
 	if err != nil {
 		c.Logger().With(log.LogParams{"error": err}).Error("Failed to change proposal")
