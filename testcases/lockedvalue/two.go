@@ -3,35 +3,36 @@ package lockedvalue
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
 func ExpectNoUnlock(sysParams *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 
 	roundOne := init.On(common.RoundReached(1), "RoundOne")
 
 	roundOne.On(
-		testlib.IsMessageSend().
+		sm.IsMessageSend().
 			And(common.IsMessageFromRound(1).Not()).
 			And(common.IsMessageFromRound(0).Not()).
 			And(common.IsVoteFromPart("h")).
 			And(common.IsVoteForProposal("zeroProposal")),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 	roundOne.On(
-		testlib.IsMessageSend().
+		sm.IsMessageSend().
 			And(common.IsMessageFromRound(1).Not()).
 			And(common.IsMessageFromRound(0).Not()).
 			And(common.IsVoteFromPart("h")).
 			And(common.IsVoteForProposal("zeroProposal").Not()),
-		testlib.FailStateLabel,
+		sm.FailStateLabel,
 	)
 	init.On(
-		common.IsCommit(), testlib.FailStateLabel,
+		common.IsCommit(), sm.FailStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
@@ -39,14 +40,14 @@ func ExpectNoUnlock(sysParams *common.SystemParams) *testlib.TestCase {
 	// Change faulty replicas votes to nil
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsVoteFromFaulty()),
 		).Then(common.ChangeVoteToNil()),
 	)
 	// Record round 0 proposal
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageType(util.Proposal)),
 		).Then(
@@ -56,17 +57,17 @@ func ExpectNoUnlock(sysParams *common.SystemParams) *testlib.TestCase {
 	// Do not deliver votes from "h"
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsVoteFromPart("h")),
 		).Then(
-			testlib.Set("zeroDelayedPrevotes").Store(),
+			testlib.StoreInSet(sm.Set("zeroDelayedPrevotes")),
 			testlib.DropMessage(),
 		),
 	)
 	// For higher rounds, we do not deliver proposal until we see a new one
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0).Not()).
 				And(common.IsProposalEq("zeroProposal")),
 		).Then(
@@ -77,7 +78,7 @@ func ExpectNoUnlock(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"ExpectNoUnlock",
 		1*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams))

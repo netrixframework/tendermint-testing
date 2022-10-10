@@ -3,13 +3,14 @@ package common
 import (
 	"strconv"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/netrix/types"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func IsCommit() testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsCommit() sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		eType, ok := e.Type.(*types.GenericEventType)
 		if ok && eType.T == "Committing block" {
 			blockID, ok := eType.Params["block_id"]
@@ -22,8 +23,8 @@ func IsCommit() testlib.Condition {
 	}
 }
 
-func IsNilCommit() testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsNilCommit() sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		eType, ok := e.Type.(*types.GenericEventType)
 		if ok && eType.T == "Committing block" {
 			blockID, ok := eType.Params["block_id"]
@@ -33,8 +34,8 @@ func IsNilCommit() testlib.Condition {
 	}
 }
 
-func IsCommitForProposal(prop string) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsCommitForProposal(prop string) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		proposal, ok := c.Vars.GetString(prop)
 		if !ok {
 			return false
@@ -48,8 +49,8 @@ func IsCommitForProposal(prop string) testlib.Condition {
 	}
 }
 
-func IsMessageFromRound(round int) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsMessageFromRound(round int) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		m, ok := util.GetMessageFromEvent(e, c)
 		if !ok {
 			return false
@@ -58,8 +59,8 @@ func IsMessageFromRound(round int) testlib.Condition {
 	}
 }
 
-func IsConsensusMessage() testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsConsensusMessage() sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		m, ok := util.GetMessageFromEvent(e, c)
 		if !ok {
 			return false
@@ -68,8 +69,8 @@ func IsConsensusMessage() testlib.Condition {
 	}
 }
 
-func IsVoteFromPart(partS string) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsVoteFromPart(partS string) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		m, ok := util.GetMessageFromEvent(e, c)
 		if !ok {
 			return false
@@ -94,11 +95,11 @@ func IsVoteFromPart(partS string) testlib.Condition {
 	}
 }
 
-func IsVoteFromFaulty() testlib.Condition {
+func IsVoteFromFaulty() sm.Condition {
 	return IsVoteFromPart("faulty")
 }
 
-func getPartition(c *testlib.Context) (*util.Partition, bool) {
+func getPartition(c *sm.Context) (*util.Partition, bool) {
 	p, exists := c.Vars.Get("partition")
 	if !exists {
 		return nil, false
@@ -107,8 +108,8 @@ func getPartition(c *testlib.Context) (*util.Partition, bool) {
 	return partition, ok
 }
 
-func IsMessageFromPart(partS string) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsMessageFromPart(partS string) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		if !e.IsMessageSend() && !e.IsMessageReceive() {
 			return false
 		}
@@ -128,8 +129,8 @@ func IsMessageFromPart(partS string) testlib.Condition {
 	}
 }
 
-func IsMessageToPart(partS string) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsMessageToPart(partS string) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		if !e.IsMessageSend() && !e.IsMessageReceive() {
 			return false
 		}
@@ -149,8 +150,8 @@ func IsMessageToPart(partS string) testlib.Condition {
 	}
 }
 
-func IsMessageType(t util.MessageType) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsMessageType(t util.MessageType) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		message, ok := c.GetMessage(e)
 		if !ok {
 			return false
@@ -163,8 +164,8 @@ func IsMessageType(t util.MessageType) testlib.Condition {
 	}
 }
 
-func IsNewHeightRoundFromPart(p string, h, r int) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsNewHeightRoundFromPart(p string, h, r int) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		partition, ok := getPartition(c)
 		if !ok {
 			return false
@@ -177,8 +178,8 @@ func IsNewHeightRoundFromPart(p string, h, r int) testlib.Condition {
 	}
 }
 
-func IsNewHeightRound(h int, r int) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsNewHeightRound(h int, r int) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		eType, ok := e.Type.(*types.GenericEventType)
 		if !ok {
 			return false
@@ -208,8 +209,8 @@ func IsNewHeightRound(h int, r int) testlib.Condition {
 
 // RoundReached returns true if all replicas have reached the specified round
 // Should be used with TrackRound handler!
-func RoundReached(r int) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func RoundReached(r int) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		curRound, ok := c.Vars.GetInt(curRoundKey)
 		if ok && curRound >= r {
 			return true
@@ -228,8 +229,8 @@ func TwoFMinus1() func(*types.Event, *testlib.Context) (int, bool) {
 	}
 }
 
-func IsVoteForProposal(proposalLabel string) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsVoteForProposal(proposalLabel string) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		proposal, ok := c.Vars.GetString(proposalLabel)
 		if !ok {
 			return false
@@ -250,8 +251,8 @@ func IsVoteForProposal(proposalLabel string) testlib.Condition {
 	}
 }
 
-func IsNilVote() testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsNilVote() sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		tMsg, ok := util.GetMessageFromEvent(e, c)
 		if !ok {
 			return false
@@ -261,8 +262,8 @@ func IsNilVote() testlib.Condition {
 	}
 }
 
-func IsNotNilVote() testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsNotNilVote() sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		tMsg, ok := util.GetMessageFromEvent(e, c)
 		if !ok {
 			return false
@@ -272,8 +273,8 @@ func IsNotNilVote() testlib.Condition {
 	}
 }
 
-func IsProposalEq(proposalLabel string) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsProposalEq(proposalLabel string) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		proposal, ok := c.Vars.GetString(proposalLabel)
 		if !ok {
 			return false
@@ -294,8 +295,8 @@ func IsProposalEq(proposalLabel string) testlib.Condition {
 	}
 }
 
-func IsFromHeight(height int) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsFromHeight(height int) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		m, ok := util.GetMessageFromEvent(e, c)
 		if !ok {
 			return false
@@ -304,8 +305,8 @@ func IsFromHeight(height int) testlib.Condition {
 	}
 }
 
-func HeightReached(h int) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func HeightReached(h int) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		eType, ok := e.Type.(*types.GenericEventType)
 		if !ok {
 			return false
@@ -325,8 +326,8 @@ func HeightReached(h int) testlib.Condition {
 	}
 }
 
-func IsEventNewRound(r int) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsEventNewRound(r int) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		eType, ok := e.Type.(*types.GenericEventType)
 		if !ok {
 			return false
@@ -346,8 +347,8 @@ func IsEventNewRound(r int) testlib.Condition {
 	}
 }
 
-func DiffCommits() testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func DiffCommits() sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		eType, ok := e.Type.(*types.GenericEventType)
 		if ok && eType.T == "Committing block" {
 			blockID, ok := eType.Params["block_id"]
@@ -364,8 +365,8 @@ func DiffCommits() testlib.Condition {
 	}
 }
 
-func MessageCurRoundGt(m int) testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func MessageCurRoundGt(m int) sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		tMsg, ok := util.GetMessageFromEvent(e, c)
 		if !ok {
 			return false
@@ -378,8 +379,8 @@ func MessageCurRoundGt(m int) testlib.Condition {
 	}
 }
 
-func IsMessageFromCurRound() testlib.Condition {
-	return func(e *types.Event, c *testlib.Context) bool {
+func IsMessageFromCurRound() sm.Condition {
+	return func(e *types.Event, c *sm.Context) bool {
 		tMsg, ok := util.GetMessageFromEvent(e, c)
 		if !ok {
 			return false

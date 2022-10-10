@@ -7,7 +7,7 @@ import (
 
 func RandomReplicaFromPart(partS string) func(*types.Event, *testlib.Context) (types.ReplicaID, bool) {
 	return func(e *types.Event, c *testlib.Context) (types.ReplicaID, bool) {
-		partition, ok := getPartition(c)
+		partition, ok := getPartition(c.Context)
 		if !ok {
 			return "", false
 		}

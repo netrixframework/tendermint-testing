@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/netrix/types"
 	"github.com/netrixframework/tendermint-testing/common"
@@ -11,16 +12,16 @@ import (
 )
 
 func GarbledMessage(sysParams *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	sm.Builder().On(
+	stateMachine := sm.NewStateMachine()
+	stateMachine.Builder().On(
 		common.IsCommit(),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromPart("faulty")),
 		).Then(
 			garbleMessage(),
@@ -30,7 +31,7 @@ func GarbledMessage(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"GarbledMessages",
 		2*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams))

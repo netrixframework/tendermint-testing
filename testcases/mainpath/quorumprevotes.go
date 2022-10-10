@@ -3,6 +3,7 @@ package mainpath
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
@@ -14,7 +15,7 @@ func QuorumPrevotes(sysParams *common.SystemParams) *testlib.TestCase {
 
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageType(util.Proposal)),
 		).Then(
 			common.RecordProposal("proposal"),
@@ -24,34 +25,34 @@ func QuorumPrevotes(sysParams *common.SystemParams) *testlib.TestCase {
 
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageReceive().
+			sm.IsMessageReceive().
 				And(common.IsMessageToPart("h")).
 				And(common.IsMessageType(util.Prevote)).
 				And(common.IsVoteForProposal("proposal")),
 		).Then(
-			testlib.Count("prevotesDelivered").Incr(),
+			testlib.IncrCounter(sm.Count("prevotesDelivered")),
 		),
 	)
 
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 
 	quorumDelivered := init.On(
-		testlib.Count("prevotesDelivered").Geq(2*sysParams.F+1),
+		sm.Count("prevotesDelivered").Geq(2*sysParams.F+1),
 		"quorumDelivered",
 	)
 	quorumDelivered.On(
-		testlib.IsMessageSend().
+		sm.IsMessageSend().
 			And(common.IsVoteFromPart("h")).
 			And(common.IsMessageType(util.Precommit)).
 			And(common.IsVoteForProposal("proposal")),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 
 	testcase := testlib.NewTestCase(
 		"QuorumPrevotes",
 		1*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams))

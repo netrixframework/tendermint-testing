@@ -3,21 +3,22 @@ package rskip
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
 func ExpectNewRound(sp *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 	// We want replicas in partition "h" to move to round 1
 	init.On(
 		common.IsNewHeightRoundFromPart("h", 1, 1),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 	newRound := init.On(
-		testlib.Count("round1ToH").Geq(sp.F+1),
+		sm.Count("round1ToH").Geq(sp.F+1),
 		"newRoundMessagesDelivered",
 	).On(
 		common.IsNewHeightRoundFromPart("h", 1, 1),
@@ -25,22 +26,22 @@ func ExpectNewRound(sp *common.SystemParams) *testlib.TestCase {
 	)
 	newRound.On(
 		common.DiffCommits(),
-		testlib.FailStateLabel,
+		sm.FailStateLabel,
 	)
 	newRound.On(
 		common.IsCommit(),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 
 	init.On(
 		common.IsCommit(),
-		testlib.FailStateLabel,
+		sm.FailStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsVoteFromFaulty()),
 		).Then(
 			common.ChangeVoteToNil(),
@@ -48,7 +49,7 @@ func ExpectNewRound(sp *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageReceive().
+			sm.IsMessageReceive().
 				And(common.IsMessageFromRound(1)).
 				And(common.IsMessageToPart("h")).
 				And(
@@ -57,12 +58,12 @@ func ExpectNewRound(sp *common.SystemParams) *testlib.TestCase {
 						Or(common.IsMessageType(util.Precommit)),
 				),
 		).Then(
-			testlib.Count("round1ToH").Incr(),
+			testlib.IncrCounter(sm.Count("round1ToH")),
 		),
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageToPart("h")).
 				And(common.IsMessageType(util.Prevote).Or(common.IsMessageType(util.Precommit))),
@@ -72,7 +73,7 @@ func ExpectNewRound(sp *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsVoteFromPart("h")),
 		).Then(
@@ -83,7 +84,7 @@ func ExpectNewRound(sp *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"ExpectNewRound",
 		1*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sp))

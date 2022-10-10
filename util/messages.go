@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/netrixframework/netrix/testlib"
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/types"
 	tcons "github.com/tendermint/tendermint/consensus"
 	tmsg "github.com/tendermint/tendermint/proto/tendermint/consensus"
@@ -185,7 +185,7 @@ func (p *TMessageParser) Parse(m []byte) (types.ParsedMessage, error) {
 	return cMsg, nil
 }
 
-func GetMessageFromEvent(e *types.Event, ctx *testlib.Context) (*TMessage, bool) {
+func GetMessageFromEvent(e *types.Event, ctx *sm.Context) (*TMessage, bool) {
 	m, ok := ctx.GetMessage(e)
 	if !ok {
 		return nil, ok

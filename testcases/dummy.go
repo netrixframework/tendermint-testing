@@ -3,6 +3,7 @@ package testcases
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/netrix/types"
 	"github.com/netrixframework/tendermint-testing/util"
@@ -20,7 +21,7 @@ func handler(e *types.Event, c *testlib.Context) ([]*types.Message, bool) {
 	return []*types.Message{}, true
 }
 
-func cond(e *types.Event, c *testlib.Context) bool {
+func cond(e *types.Event, c *sm.Context) bool {
 	if !e.IsMessageSend() {
 		return false
 	}
@@ -33,12 +34,12 @@ func cond(e *types.Event, c *testlib.Context) bool {
 }
 
 func DummyTestCaseStateMachine() *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	sm.Builder().On(cond, testlib.SuccessStateLabel)
+	stateMachine := sm.NewStateMachine()
+	stateMachine.Builder().On(cond, sm.SuccessStateLabel)
 
 	h := testlib.NewFilterSet()
 	h.AddFilter(handler)
 
-	testcase := testlib.NewTestCase("DummySM", 30*time.Second, sm, h)
+	testcase := testlib.NewTestCase("DummySM", 30*time.Second, stateMachine, h)
 	return testcase
 }

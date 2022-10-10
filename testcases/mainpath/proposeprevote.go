@@ -3,26 +3,27 @@ package mainpath
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
 func ProposePrevote(sp *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
+	stateMachine := sm.NewStateMachine()
 
-	init := sm.Builder()
+	init := stateMachine.Builder()
 	init.On(
-		testlib.IsMessageSend().
+		sm.IsMessageSend().
 			And(common.IsVoteFromPart("h")).
 			And(common.IsVoteForProposal("zeroProposal")),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageType(util.Proposal)),
 		).Then(
@@ -33,7 +34,7 @@ func ProposePrevote(sp *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"ProposePrevote",
 		30*time.Second,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sp))

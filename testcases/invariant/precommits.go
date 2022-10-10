@@ -3,6 +3,7 @@ package invariant
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
@@ -13,7 +14,7 @@ func QuorumPrecommits(sp *common.SystemParams) *testlib.TestCase {
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageType(util.Proposal)),
 		).Then(
@@ -23,33 +24,33 @@ func QuorumPrecommits(sp *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageToPart("h")).
 				And(common.IsMessageType(util.Precommit)).
 				And(common.IsVoteForProposal("proposal")),
 		).Then(
-			testlib.Count("precommitsSeen").Incr(),
+			testlib.IncrCounter(sm.Count("precommitsSeen")),
 		),
 	)
 
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 	init.On(
 		common.IsCommitForProposal("proposal"),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 	init.On(
-		testlib.Count("precommitsSeen").Geq(2*sp.F+1),
+		sm.Count("precommitsSeen").Geq(2*sp.F+1),
 		"quorumPrecommitsSeen",
 	).On(
 		common.IsCommitForProposal("proposal"),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 
 	testcase := testlib.NewTestCase(
 		"QuorumPrecommits",
 		1*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sp))

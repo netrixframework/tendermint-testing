@@ -14,10 +14,11 @@ import (
 	"github.com/netrixframework/netrix/types"
 	"github.com/netrixframework/tendermint-testing/util"
 	"github.com/spf13/cobra"
+	"golang.org/x/exp/rand"
 )
 
 type records struct {
-	duration     map[int]time.Duration
+	duration     map[int][]time.Duration
 	curStartTime time.Time
 	timeSet      bool
 	lock         *sync.Mutex
@@ -25,7 +26,7 @@ type records struct {
 
 func newRecords() *records {
 	return &records{
-		duration: make(map[int]time.Duration),
+		duration: make(map[int][]time.Duration),
 		lock:     new(sync.Mutex),
 		timeSet:  false,
 	}
@@ -35,7 +36,7 @@ func (r *records) stepFunc(e *types.Event, ctx *strategies.Context) {
 	switch eType := e.Type.(type) {
 	case *types.MessageSendEventType:
 		messageID, _ := e.MessageID()
-		message, ok := ctx.Messages.Get(messageID)
+		message, ok := ctx.MessagePool.Get(messageID)
 		if !ok {
 			return
 		}
@@ -43,10 +44,9 @@ func (r *records) stepFunc(e *types.Event, ctx *strategies.Context) {
 		if !ok {
 			return
 		}
-		height, round := tMsg.HeightRound()
+		_, round := tMsg.HeightRound()
 		r.lock.Lock()
 		if tMsg.Type == util.Proposal &&
-			height == 1 &&
 			round == 0 &&
 			!r.timeSet {
 			r.curStartTime = time.Now()
@@ -57,11 +57,11 @@ func (r *records) stepFunc(e *types.Event, ctx *strategies.Context) {
 		if eType.T == "Committing block" {
 			r.lock.Lock()
 			if r.timeSet {
-				duration := time.Since(r.curStartTime)
 				_, ok := r.duration[ctx.CurIteration()]
 				if !ok {
-					r.duration[ctx.CurIteration()] = duration
+					r.duration[ctx.CurIteration()] = make([]time.Duration, 0)
 				}
+				r.duration[ctx.CurIteration()] = append(r.duration[ctx.CurIteration()], time.Since(r.curStartTime))
 				r.timeSet = false
 			}
 			r.lock.Unlock()
@@ -70,19 +70,23 @@ func (r *records) stepFunc(e *types.Event, ctx *strategies.Context) {
 }
 
 func (r *records) finalize(ctx *strategies.Context) {
-	ctx.Logger.Info("Finalizing")
 	sum := 0
+	count := 0
 	r.lock.Lock()
 	for _, dur := range r.duration {
-		sum = sum + int(dur)
+		for _, d := range dur {
+			sum = sum + int(d)
+			count = count + 1
+		}
 	}
-	count := len(r.duration)
 	r.lock.Unlock()
 	if count != 0 {
+		iterations := len(r.duration)
 		avg := time.Duration(sum / count)
 		ctx.Logger.With(log.LogParams{
-			"completed_runs": count,
-			"average_time":   avg.String(),
+			"completed_runs":       iterations,
+			"average_time":         avg.String(),
+			"blocks_per_iteration": count / iterations,
 		}).Info("Metrics")
 	}
 }
@@ -95,28 +99,35 @@ var strategyCmd = &cobra.Command{
 
 		records := newRecords()
 
+		dist := timeout.NewExpDistribution(1.5)
+		dist.SetSrc(rand.NewSource(uint64(time.Now().UnixMilli())))
+
 		strategy, err := timeout.NewTimeoutStrategy(&timeout.TimeoutStrategyConfig{
-			Nondeterministic: true,
-			ClockDrift:       5,
-			MaxMessageDelay:  200 * time.Millisecond,
+			Nondeterministic:  true,
+			SpuriousCheck:     true,
+			ClockDrift:        5,
+			MaxMessageDelay:   100 * time.Millisecond,
+			DelayDistribution: dist,
+			// PendingEventThreshold: 20,
+			RecordFilePath: "/Users/srinidhin/Local/data/testing/tendermint/run",
 		})
 		if err != nil {
 			return err
 		}
 		driver := strategies.NewStrategyDriver(
 			&config.Config{
-				APIServerAddr: "10.0.0.8:7074",
+				APIServerAddr: "172.23.37.208:7074",
 				NumReplicas:   4,
 				LogConfig: config.LogConfig{
 					Format: "json",
 					Level:  "info",
-					Path:   "/tmp/tendermint/log/checker.log",
+					Path:   "/Users/srinidhin/Local/data/testing/tendermint/run/checker.log",
 				},
 			},
 			&util.TMessageParser{},
 			strategy,
 			&strategies.StrategyConfig{
-				Iterations:       15,
+				Iterations:       30,
 				IterationTimeout: 40 * time.Second,
 				StepFunc:         records.stepFunc,
 				FinalizeFunc:     records.finalize,
@@ -128,7 +139,9 @@ var strategyCmd = &cobra.Command{
 			driver.Stop()
 		}()
 
-		driver.Start()
-		return nil
+		if err := driver.Start(); err != nil {
+			panic(err)
+		}
+		return err
 	},
 }

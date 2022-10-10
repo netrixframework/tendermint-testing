@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/netrix/types"
 	"github.com/netrixframework/tendermint-testing/common"
@@ -11,21 +12,21 @@ import (
 )
 
 func HigherRound(sysParams *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 	init.On(
 		common.IsCommit(),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 	init.On(
 		common.DiffCommits(),
-		testlib.FailStateLabel,
+		sm.FailStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsVoteFromFaulty()),
 		).Then(
 			changeVoteRound(),
@@ -35,7 +36,7 @@ func HigherRound(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"HigherRound",
 		2*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams))
@@ -60,7 +61,7 @@ func changeVoteRound() testlib.Action {
 			return []*types.Message{}
 		}
 		var replica *types.Replica = nil
-		for _, r := range c.Replicas.Iter() {
+		for _, r := range c.ReplicaStore.Iter() {
 			addr, err := util.GetReplicaAddress(r)
 			if err != nil {
 				continue

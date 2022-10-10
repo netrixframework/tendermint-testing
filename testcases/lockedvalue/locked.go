@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/netrixframework/netrix/log"
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/netrix/types"
 	"github.com/netrixframework/tendermint-testing/common"
@@ -16,15 +17,15 @@ func changeProposalToNil(e *types.Event, c *testlib.Context) []*types.Message {
 	if !ok {
 		return []*types.Message{}
 	}
-	replica, _ := c.Replicas.Get(message.From)
+	replica, _ := c.ReplicaStore.Get(message.From)
 	newProp, err := util.ChangeProposalBlockIDToNil(replica, tMsg)
 	if err != nil {
-		c.Logger().With(log.LogParams{"error": err}).Error("Failed to change proposal")
+		c.Logger.With(log.LogParams{"error": err}).Error("Failed to change proposal")
 		return []*types.Message{message}
 	}
 	newMsgB, err := newProp.Marshal()
 	if err != nil {
-		c.Logger().With(log.LogParams{"error": err}).Error("Failed to marshal changed proposal")
+		c.Logger.With(log.LogParams{"error": err}).Error("Failed to marshal changed proposal")
 		return []*types.Message{message}
 	}
 	return []*types.Message{c.NewMessage(message, newMsgB)}
@@ -37,18 +38,18 @@ func changeProposalToNil(e *types.Event, c *testlib.Context) []*types.Message {
 // 	3. Replicas should prevote and precommit the earlier block and commit
 func LockedCommit(sysParams *common.SystemParams) *testlib.TestCase {
 
-	sm := testlib.NewStateMachine()
-	initialState := sm.Builder()
-	initialState.On(common.IsCommit(), testlib.FailStateLabel)
+	stateMachine := sm.NewStateMachine()
+	initialState := stateMachine.Builder()
+	initialState.On(common.IsCommit(), sm.FailStateLabel)
 	round1 := initialState.On(common.RoundReached(1), "round1")
-	round1.On(common.IsCommit(), testlib.SuccessStateLabel)
-	round1.On(common.RoundReached(2), testlib.FailStateLabel)
+	round1.On(common.IsCommit(), sm.SuccessStateLabel)
+	round1.On(common.RoundReached(2), sm.FailStateLabel)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundAll)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().And(common.IsVoteFromFaulty()),
+			sm.IsMessageSend().And(common.IsVoteFromFaulty()),
 		).Then(
 			common.ChangeVoteToNil(),
 		),
@@ -57,7 +58,7 @@ func LockedCommit(sysParams *common.SystemParams) *testlib.TestCase {
 	// We expect replicas to lock onto the proposal and this is just to ensure they move to the next round
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageType(util.Precommit)),
 		).Then(
@@ -66,7 +67,7 @@ func LockedCommit(sysParams *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(1)).
 				And(common.IsMessageType(util.Proposal)),
 		).Then(
@@ -74,7 +75,7 @@ func LockedCommit(sysParams *common.SystemParams) *testlib.TestCase {
 		),
 	)
 
-	testcase := testlib.NewTestCase("WrongProposal", 30*time.Second, sm, filters)
+	testcase := testlib.NewTestCase("WrongProposal", 30*time.Second, stateMachine, filters)
 	testcase.SetupFunc(common.Setup(sysParams))
 
 	return testcase

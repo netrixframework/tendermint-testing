@@ -3,32 +3,33 @@ package mainpath
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
 func NilPrevotes(sysParams *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 
 	nilQuorumDelivered := init.On(
-		testlib.Count("nilPrevotesDelivered").Geq(2*sysParams.F+1),
+		sm.Count("nilPrevotesDelivered").Geq(2*sysParams.F+1),
 		"nilQuorumDelivered",
 	)
 	nilQuorumDelivered.On(
-		testlib.IsMessageSend().
-			And(testlib.IsMessageFromF(common.GetRandomReplica)).
+		sm.IsMessageSend().
+			And(sm.IsMessageFromF(common.GetRandomReplica)).
 			And(common.IsMessageType(util.Precommit)).
 			And(common.IsNilVote()),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
 	// We don't deliver any proposal and hence we should see that replicas other than the proposer prevote nil.
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageType(util.Proposal)),
 		).Then(
 			testlib.DropMessage(),
@@ -36,19 +37,19 @@ func NilPrevotes(sysParams *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageReceive().
-				And(testlib.IsMessageToF(common.GetRandomReplica)).
+			sm.IsMessageReceive().
+				And(sm.IsMessageToF(common.GetRandomReplica)).
 				And(common.IsMessageType(util.Prevote)).
 				And(common.IsNilVote()),
 		).Then(
-			testlib.Count("nilPrevotesDelivered").Incr(),
+			testlib.IncrCounter(sm.Count("nilPrevotesDelivered")),
 		),
 	)
 
 	testcase := testlib.NewTestCase(
 		"NilPrevotes",
 		1*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams, common.PickRandomReplica()))

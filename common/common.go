@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/netrixframework/netrix/log"
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/netrix/types"
 	"github.com/netrixframework/tendermint-testing/util"
@@ -35,35 +36,35 @@ func Setup(sysParams *SystemParams, options ...SetupOption) func(*testlib.Contex
 
 func PickRandomReplica() SetupOption {
 	return func(c *testlib.Context) {
-		rI := rand.Intn(c.Replicas.Cap())
+		rI := rand.Intn(c.ReplicaStore.Cap())
 		var replica types.ReplicaID
-		for i, r := range c.Replicas.Iter() {
+		for i, r := range c.ReplicaStore.Iter() {
 			replica = r.ID
 			if i == rI {
 				break
 			}
 		}
 		c.Vars.Set(randomReplicaKey, string(replica))
-		c.Logger().With(log.LogParams{
+		c.Logger.With(log.LogParams{
 			"randomReplica": replica,
 		}).Info("Picked random replica")
 	}
 }
 
-func GetRandomReplica(_ *types.Event, c *testlib.Context) (types.ReplicaID, bool) {
+func GetRandomReplica(_ *types.Event, c *sm.Context) (types.ReplicaID, bool) {
 	rS, ok := c.Vars.GetString(randomReplicaKey)
 	return types.ReplicaID(rS), ok
 }
 
 func partition(c *testlib.Context) {
-	f := int((c.Replicas.Cap() - 1) / 3)
-	partitioner := util.NewGenericPartitioner(c.Replicas)
+	f := int((c.ReplicaStore.Cap() - 1) / 3)
+	partitioner := util.NewGenericPartitioner(c.ReplicaStore)
 	partition, _ := partitioner.CreatePartition(
 		[]int{1, f, 2 * f},
 		[]string{"h", "faulty", "rest"},
 	)
 	c.Vars.Set("partition", partition)
-	c.Logger().With(log.LogParams{
+	c.Logger.With(log.LogParams{
 		"partition": partition.String(),
 	}).Info("Partitioned replicas")
 }

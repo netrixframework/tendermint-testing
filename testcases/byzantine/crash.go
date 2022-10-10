@@ -3,20 +3,21 @@ package byzantine
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 )
 
 func CrashReplica(sp *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 	roundOne := init.On(
 		common.RoundReached(1),
 		"roundOne",
 	)
 	roundOne.On(
 		common.IsCommit(),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
@@ -31,7 +32,7 @@ func CrashReplica(sp *common.SystemParams) *testlib.TestCase {
 	// )
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsVoteFromFaulty()),
 		).Then(
@@ -40,7 +41,7 @@ func CrashReplica(sp *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsVoteFromPart("h")),
 		).Then(
@@ -51,7 +52,7 @@ func CrashReplica(sp *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"CrashReplica",
 		2*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sp))

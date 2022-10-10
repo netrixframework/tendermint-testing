@@ -3,31 +3,32 @@ package byzantine
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
 func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
-	init.On(common.IsCommit(), testlib.FailStateLabel)
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
+	init.On(common.IsCommit(), sm.FailStateLabel)
 
 	allowCatchUp := init.On(common.RoundReached(5), "allowCatchUp")
 	allowCatchUp.On(
 		common.IsCommit(),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 	allowCatchUp.On(
 		common.DiffCommits(),
-		testlib.FailStateLabel,
+		sm.FailStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundTwoThirds)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsVoteFromFaulty()),
 		).Then(
 			common.ChangeVoteToNil(),
@@ -35,7 +36,7 @@ func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsVoteFromPart("h")),
 		).Then(
@@ -44,17 +45,17 @@ func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageToPart("h")).
 				And(common.IsMessageType(util.Prevote).Or(common.IsMessageType(util.Precommit))).
-				And(sm.InState("allowCatchUp").Not()),
+				And(stateMachine.InState("allowCatchUp").Not()),
 		).Then(
 			testlib.DropMessage(),
 		),
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageToPart("h")).
 				And(common.IsMessageFromCurRound()),
 		).Then(
@@ -63,7 +64,7 @@ func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageToPart("h")).
 				And(common.IsMessageType(util.Prevote).Or(common.IsMessageType(util.Precommit))).
 				And(common.MessageCurRoundGt(2)),
@@ -75,7 +76,7 @@ func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"LaggingReplica",
 		25*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sp))

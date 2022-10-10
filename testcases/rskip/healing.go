@@ -3,14 +3,15 @@ package rskip
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
 func CommitAfterRoundSkip(sp *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 
 	roundOne := init.On(
 		common.RoundReached(1),
@@ -18,18 +19,18 @@ func CommitAfterRoundSkip(sp *common.SystemParams) *testlib.TestCase {
 	)
 	roundOne.On(
 		common.IsCommitForProposal("zeroProposal"),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 	roundOne.On(
 		common.DiffCommits(),
-		testlib.FailStateLabel,
+		sm.FailStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundAll)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsVoteFromFaulty()),
 		).Then(
 			common.ChangeVoteToNil(),
@@ -37,26 +38,26 @@ func CommitAfterRoundSkip(sp *common.SystemParams) *testlib.TestCase {
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsVoteFromPart("h")),
 		).Then(
-			testlib.Set("delayedVotes").Store(),
+			testlib.StoreInSet(sm.Set("delayedVotes")),
 			testlib.DropMessage(),
 		),
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().Not().
-				And(sm.InState("Round1")),
+			sm.IsMessageSend().Not().
+				And(stateMachine.InState("Round1")),
 		).Then(
-			testlib.Set("delayedVotes").DeliverAll(),
+			testlib.DeliverAllFromSet(sm.Set("delayedVotes")),
 			testlib.DeliverMessage(),
 		),
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageType(util.Proposal)),
 		).Then(
@@ -68,7 +69,7 @@ func CommitAfterRoundSkip(sp *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"CommitAfterRoundSkip",
 		2*time.Minute,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sp))

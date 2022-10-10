@@ -3,35 +3,36 @@ package mainpath
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
 func ProposalNilPrevote(sp *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 
 	init.On(
-		testlib.IsMessageSend().
+		sm.IsMessageSend().
 			And(common.IsMessageFromRound(0)).
 			And(common.IsVoteFromPart("h")).
 			And(common.IsNotNilVote()),
-		testlib.FailStateLabel,
+		sm.FailStateLabel,
 	)
 	init.On(
-		testlib.IsMessageSend().
+		sm.IsMessageSend().
 			And(common.IsMessageFromRound(0)).
 			And(common.IsVoteFromPart("h")).
 			And(common.IsNilVote()),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 
 	cascade := testlib.NewFilterSet()
 
 	cascade.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageToPart("h")).
 				And(common.IsMessageType(util.Proposal)),
@@ -43,7 +44,7 @@ func ProposalNilPrevote(sp *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"ProposalNilPrevote",
 		30*time.Second,
-		sm,
+		stateMachine,
 		cascade,
 	)
 	testcase.SetupFunc(common.Setup(sp))

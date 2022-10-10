@@ -10,7 +10,7 @@ import (
 
 func RecordProposal(key string) testlib.Action {
 	return func(e *types.Event, c *testlib.Context) (messages []*types.Message) {
-		tMsg, ok := util.GetMessageFromEvent(e, c)
+		tMsg, ok := util.GetMessageFromEvent(e, c.Context)
 		if !ok {
 			return
 		}
@@ -44,7 +44,7 @@ func ChangeVoteToNil() testlib.Action {
 			return []*types.Message{}
 		}
 		var replica *types.Replica = nil
-		for _, r := range c.Replicas.Iter() {
+		for _, r := range c.ReplicaStore.Iter() {
 			addr, err := util.GetReplicaAddress(r)
 			if err != nil {
 				continue
@@ -96,7 +96,7 @@ func ChangeVoteToProposalMessage(proposalMessageLabel string) testlib.Action {
 			return []*types.Message{}
 		}
 		var replica *types.Replica = nil
-		for _, r := range c.Replicas.Iter() {
+		for _, r := range c.ReplicaStore.Iter() {
 			addr, err := util.GetReplicaAddress(r)
 			if err != nil {
 				continue

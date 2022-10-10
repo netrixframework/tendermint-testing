@@ -3,34 +3,35 @@ package rskip
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
 func BlockVotes(sysParams *common.SystemParams) *testlib.TestCase {
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
 	init.MarkSuccess()
-	init.On(common.IsCommit(), testlib.FailStateLabel)
-	init.On(common.IsEventNewRound(1), testlib.FailStateLabel)
+	init.On(common.IsCommit(), sm.FailStateLabel)
+	init.On(common.IsEventNewRound(1), sm.FailStateLabel)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageType(util.Prevote)).
-				And(testlib.CountTo("votes").Lt(2*sysParams.F)),
+				And(sm.CountTo("votes").Lt(2*sysParams.F)),
 		).Then(
-			testlib.CountTo("votes").Incr(),
+			testlib.IncrCounter(sm.CountTo("votes")),
 			testlib.DeliverMessage(),
 		),
 	)
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageType(util.Prevote)).
-				And(testlib.CountTo("votes").Geq(2 * sysParams.F)),
+				And(sm.CountTo("votes").Geq(2 * sysParams.F)),
 		).Then(
 			testlib.DropMessage(),
 		),
@@ -39,7 +40,7 @@ func BlockVotes(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"BlockVotes",
 		50*time.Second,
-		sm,
+		stateMachine,
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams))

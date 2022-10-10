@@ -3,6 +3,7 @@ package lockedvalue
 import (
 	"time"
 
+	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/netrix/types"
 	"github.com/netrixframework/tendermint-testing/common"
@@ -22,12 +23,12 @@ func changeVote() testlib.Action {
 
 func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
 
-	sm := testlib.NewStateMachine()
-	init := sm.Builder()
-	init.On(common.IsCommit(), testlib.FailStateLabel)
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
+	init.On(common.IsCommit(), sm.FailStateLabel)
 	// We observe a precommit for round 0 proposal from replica "h"
 	valueLocked := init.On(
-		testlib.IsMessageSend().
+		sm.IsMessageSend().
 			And(common.IsVoteFromPart("h")).
 			And(common.IsMessageType(util.Precommit)).
 			And(common.IsVoteForProposal("zeroProposal")),
@@ -37,11 +38,11 @@ func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
 	roundOne := valueLocked.On(common.RoundReached(1), "RoundOne")
 	// We observe a precommit for the new proposal from h
 	roundOne.On(
-		testlib.IsMessageSend().
+		sm.IsMessageSend().
 			And(common.IsMessageType(util.Precommit)).
 			And(common.IsVoteFromPart("h")).
 			And(common.IsVoteForProposal("newProposal")),
-		testlib.SuccessStateLabel,
+		sm.SuccessStateLabel,
 	)
 
 	filters := testlib.NewFilterSet()
@@ -50,7 +51,7 @@ func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
 	// New proposal otherwise
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				// And(common.IsMessageType())
 				And(common.IsVoteFromFaulty()),
 		).Then(changeVote()),
@@ -58,7 +59,7 @@ func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
 	// Record round 0 proposal
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageType(util.Proposal)),
 		).Then(
@@ -70,17 +71,17 @@ func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
 	// This along with changing votes from faulty will ensure rounds are always skipped
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsVoteFromPart("h")),
 		).Then(
-			testlib.Set("zeroDelayedPrevotes").Store(),
+			testlib.StoreInSet(sm.Set("zeroDelayedPrevotes")),
 			testlib.DropMessage(),
 		),
 	)
 	// For higher rounds, we do not deliver proposal until we see a new one
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0).Not()).
 				And(common.IsMessageType(util.Proposal)).
 				And(common.IsProposalEq("zeroProposal")),
@@ -91,7 +92,7 @@ func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
 	// Record the new proposal message
 	filters.AddFilter(
 		testlib.If(
-			testlib.IsMessageSend().
+			sm.IsMessageSend().
 				And(common.IsMessageFromRound(0).Not()).
 				And(common.IsMessageType(util.Proposal)).
 				And(common.IsProposalEq("zeroProposal").Not()),
@@ -102,7 +103,7 @@ func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
 		),
 	)
 
-	testcase := testlib.NewTestCase("Relocking", 3*time.Minute, sm, filters)
+	testcase := testlib.NewTestCase("Relocking", 3*time.Minute, stateMachine, filters)
 	testcase.SetupFunc(common.Setup(sysParams))
 	return testcase
 
