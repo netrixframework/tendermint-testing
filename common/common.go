@@ -47,7 +47,7 @@ func PickRandomReplica() SetupOption {
 		c.Vars.Set(randomReplicaKey, string(replica))
 		c.Logger.With(log.LogParams{
 			"randomReplica": replica,
-		}).Info("Picked random replica")
+		}).Debug("Picked random replica")
 	}
 }
 
@@ -59,14 +59,20 @@ func GetRandomReplica(_ *types.Event, c *sm.Context) (types.ReplicaID, bool) {
 func partition(c *testlib.Context) {
 	f := int((c.ReplicaStore.Cap() - 1) / 3)
 	partitioner := util.NewGenericPartitioner(c.ReplicaStore)
-	partition, _ := partitioner.CreatePartition(
+	partition, err := partitioner.CreatePartition(
 		[]int{1, f, 2 * f},
 		[]string{"h", "faulty", "rest"},
 	)
+	if err != nil {
+		c.Logger.With(log.LogParams{
+			"error": err,
+		}).Debug("Error creating partition")
+		return
+	}
 	c.Vars.Set("partition", partition)
 	c.Logger.With(log.LogParams{
 		"partition": partition.String(),
-	}).Info("Partitioned replicas")
+	}).Debug("Partitioned replicas")
 }
 
 func GetCurRound(ctx *testlib.Context) (int, bool) {

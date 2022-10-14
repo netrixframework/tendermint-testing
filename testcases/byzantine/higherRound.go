@@ -82,6 +82,6 @@ func changeVoteRound() testlib.Action {
 		if err != nil {
 			return []*types.Message{}
 		}
-		return []*types.Message{c.NewMessage(m, msgB)}
+		return []*types.Message{c.NewMessage(m, msgB, newVote)}
 	}
 }

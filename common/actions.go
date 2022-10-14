@@ -65,7 +65,7 @@ func ChangeVoteToNil() testlib.Action {
 		if err != nil {
 			return []*types.Message{}
 		}
-		return []*types.Message{c.NewMessage(message, msgB)}
+		return []*types.Message{c.NewMessage(message, msgB, newVote)}
 	}
 }
 
@@ -117,6 +117,6 @@ func ChangeVoteToProposalMessage(proposalMessageLabel string) testlib.Action {
 		if err != nil {
 			return []*types.Message{}
 		}
-		return []*types.Message{c.NewMessage(message, msgB)}
+		return []*types.Message{c.NewMessage(message, msgB, newVote)}
 	}
 }

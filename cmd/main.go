@@ -7,7 +7,7 @@ func RootCmd() *cobra.Command {
 		Use: "tendermint-testing",
 	}
 	cmd.CompletionOptions.DisableDefaultCmd = true
-	cmd.AddCommand(strategyCmd)
+	cmd.AddCommand(strategyCmd())
 	cmd.AddCommand(unittestCmd)
 	return cmd
 }

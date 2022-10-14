@@ -2,7 +2,6 @@ package util
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -120,11 +119,7 @@ func (t *TMessage) Marshal() ([]byte, error) {
 		t.MsgB = msgB
 	}
 
-	result, err := json.Marshal(t)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return t.MsgB, nil
 }
 
 type TMessageParser struct {

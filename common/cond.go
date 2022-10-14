@@ -78,7 +78,6 @@ func IsVoteFromPart(partS string) sm.Condition {
 		if m.Type != util.Precommit && m.Type != util.Prevote {
 			return false
 		}
-
 		partition, ok := getPartition(c)
 		if !ok {
 			return false

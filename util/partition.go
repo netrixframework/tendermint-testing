@@ -98,11 +98,15 @@ func (g *GenericPartitioner) CreatePartition(sizes []int, labels []string) (*Par
 		part := parts[curIndex]
 		size := sizes[curIndex]
 		if part.Size() < size {
-			part.ReplicaSet.Add(r)
+			if err := part.ReplicaSet.Add(r); err != nil {
+				return nil, err
+			}
 		} else {
 			curIndex++
 			part := parts[curIndex]
-			part.ReplicaSet.Add(r)
+			if err := part.ReplicaSet.Add(r); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return NewPartition(parts...), nil

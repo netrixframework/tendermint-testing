@@ -28,7 +28,7 @@ func changeProposalToNil(e *types.Event, c *testlib.Context) []*types.Message {
 		c.Logger.With(log.LogParams{"error": err}).Error("Failed to marshal changed proposal")
 		return []*types.Message{message}
 	}
-	return []*types.Message{c.NewMessage(message, newMsgB)}
+	return []*types.Message{c.NewMessage(message, newMsgB, newProp)}
 }
 
 // States:

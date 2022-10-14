@@ -29,7 +29,7 @@ func NewReplicaSet() *ReplicaSet {
 	}
 }
 
-func (r *ReplicaSet) Add(replica *types.Replica) {
+func (r *ReplicaSet) Add(replica *types.Replica) error {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	_, ok := r.replicas[replica.ID]
@@ -37,10 +37,13 @@ func (r *ReplicaSet) Add(replica *types.Replica) {
 		if key, err := GetPrivKey(replica); err == nil {
 			addr := key.PubKey().Address()
 			r.valAddrs[string(addr.Bytes())] = true
+		} else {
+			return err
 		}
 		r.replicas[replica.ID] = replica
 		r.size = r.size + 1
 	}
+	return nil
 }
 
 func (r *ReplicaSet) GetRandom() *types.Replica {
@@ -93,20 +96,24 @@ func (r *ReplicaSet) Iter() []types.ReplicaID {
 	return result
 }
 
-func (r *ReplicaSet) String() string {
-	str := ""
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+func (rs *ReplicaSet) String() string {
+	str := "Addr: "
+	rs.mtx.Lock()
+	defer rs.mtx.Unlock()
 
-	for r := range r.replicas {
+	for r := range rs.replicas {
 		str += string(r) + ","
+	}
+	str += "; Validators: "
+	for v := range rs.valAddrs {
+		str += string(v) + ","
 	}
 	return str
 }
 
 // Should cache key instead of decoding everytime
 func GetPrivKey(r *types.Replica) (crypto.PrivKey, error) {
-	pK, ok := r.Info["privkey"]
+	pK, ok := r.Info["privKey"]
 	if !ok {
 		return nil, errors.New("no private key specified")
 	}

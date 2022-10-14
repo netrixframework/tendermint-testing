@@ -25,11 +25,11 @@ var unittestCmd = &cobra.Command{
 
 		server, err := testlib.NewTestingServer(
 			&config.Config{
-				APIServerAddr: "192.168.50.216:7074",
+				APIServerAddr: "192.168.2.1:7074",
 				NumReplicas:   sysParams.N,
 				LogConfig: config.LogConfig{
 					Format: "json",
-					Path:   "/tmp/tendermint/log/checker.log",
+					Path:   "/Users/srinidhin/Local/data/testing/tendermint/t/checker.log",
 				},
 			},
 			&util.TMessageParser{},

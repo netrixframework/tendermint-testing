@@ -4,9 +4,10 @@ go 1.18
 
 require (
 	github.com/gogo/protobuf v1.3.2
-	github.com/netrixframework/netrix v0.2.2
+	github.com/netrixframework/netrix v0.2.3
 	github.com/spf13/cobra v1.3.0
 	github.com/tendermint/tendermint v0.34.10
+	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 )
 
 require (
@@ -55,7 +56,6 @@ require (
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
-	golang.org/x/exp v0.0.0-20220428152302-39d4317da171 // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
 	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 	golang.org/x/text v0.3.7 // indirect

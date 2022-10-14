@@ -6,7 +6,6 @@ import (
 	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/tendermint-testing/common"
-	"github.com/netrixframework/tendermint-testing/util"
 )
 
 func RoundSkip(sysParams *common.SystemParams, height, round int) *testlib.TestCase {
@@ -33,7 +32,6 @@ func RoundSkip(sysParams *common.SystemParams, height, round int) *testlib.TestC
 	filters.AddFilter(
 		testlib.If(
 			sm.IsMessageSend().
-				And(common.IsFromHeight(height)).
 				And(common.IsVoteFromFaulty()),
 		).Then(
 			common.ChangeVoteToNil(),
@@ -41,26 +39,26 @@ func RoundSkip(sysParams *common.SystemParams, height, round int) *testlib.TestC
 	)
 	filters.AddFilter(
 		testlib.If(
-			stateMachine.InState("roundReached"),
+			sm.OnceCondition("DeliverDelayed", stateMachine.InState("roundReached")),
 		).Then(
 			testlib.DeliverAllFromSet(sm.Set("DelayedPrevotes")),
+			testlib.DeliverMessage(),
 		),
 	)
-	filters.AddFilter(
-		testlib.If(
-			sm.IsMessageSend().
-				And(common.IsFromHeight(height)).
-				And(common.IsMessageFromPart("h")).
-				And(common.IsMessageType(util.Prevote)),
-		).Then(
-			testlib.StoreInSet(sm.Set("DelayedPrevotes")),
-			testlib.DropMessage(),
-		),
-	)
+	// filters.AddFilter(
+	// 	testlib.If(
+	// 		sm.IsMessageSend().
+	// 			And(common.IsMessageFromPart("h")).
+	// 			And(common.IsMessageType(util.Prevote)),
+	// 	).Then(
+	// 		testlib.StoreInSet(sm.Set("DelayedPrevotes")),
+	// 		testlib.DropMessage(),
+	// 	),
+	// )
 
 	testCase := testlib.NewTestCase(
 		"RoundSkipWithPrevotes",
-		30*time.Second,
+		1*time.Minute,
 		stateMachine,
 		filters,
 	)

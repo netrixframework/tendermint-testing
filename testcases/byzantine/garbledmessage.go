@@ -56,7 +56,7 @@ func garbleMessage() testlib.Action {
 		if err != nil {
 			return []*types.Message{m}
 		}
-		return []*types.Message{c.NewMessage(m, newMsg)}
+		return []*types.Message{c.NewMessage(m, newMsg, tMsg)}
 	}
 }
 
