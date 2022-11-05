@@ -42,14 +42,13 @@ var pctTestStrategy = &cobra.Command{
 				RecordFilePath: "/Users/srinidhin/Local/data/testing/tendermint/t",
 			},
 			rskip.RoundSkip(common.NewSystemParams(4), 1, 2),
-			true,
 		)
 
 		strategy = strategies.NewStrategyWithProperty(strategy, stateMachine)
 
 		driver := strategies.NewStrategyDriver(
 			&config.Config{
-				APIServerAddr: "10.0.0.2:7074",
+				APIServerAddr: "127.0.0.1:7074",
 				NumReplicas:   4,
 				LogConfig: config.LogConfig{
 					Format: "json",
@@ -60,7 +59,7 @@ var pctTestStrategy = &cobra.Command{
 			&util.TMessageParser{},
 			strategy,
 			&strategies.StrategyConfig{
-				Iterations:       200,
+				Iterations:       10,
 				IterationTimeout: 45 * time.Second,
 			},
 		)

@@ -24,6 +24,7 @@ var testStrat = &cobra.Command{
 
 		var strategy strategies.Strategy = unittest.NewTestCaseStrategy(
 			rskip.RoundSkip(common.NewSystemParams(4), 1, 2),
+			"/Users/srinidhin/Local/data/testing/tendermint/t",
 		)
 
 		stateMachine := sm.NewStateMachine()
@@ -41,7 +42,7 @@ var testStrat = &cobra.Command{
 
 		driver := strategies.NewStrategyDriver(
 			&config.Config{
-				APIServerAddr: "10.0.0.2:7074",
+				APIServerAddr: "127.0.0.1:7074",
 				NumReplicas:   4,
 				LogConfig: config.LogConfig{
 					Format: "json",
@@ -51,7 +52,7 @@ var testStrat = &cobra.Command{
 			&util.TMessageParser{},
 			strategy,
 			&strategies.StrategyConfig{
-				Iterations:       100,
+				Iterations:       10,
 				IterationTimeout: 45 * time.Second,
 			},
 		)

@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/gogo/protobuf v1.3.2
-	github.com/netrixframework/netrix v0.2.3
+	github.com/netrixframework/netrix v0.2.8
 	github.com/spf13/cobra v1.3.0
 	github.com/tendermint/tendermint v0.34.10
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
