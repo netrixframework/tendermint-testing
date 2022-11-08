@@ -11,7 +11,7 @@ import (
 	"github.com/netrixframework/netrix/strategies"
 	"github.com/netrixframework/netrix/strategies/pct"
 	"github.com/netrixframework/tendermint-testing/common"
-	"github.com/netrixframework/tendermint-testing/testcases/rskip"
+	"github.com/netrixframework/tendermint-testing/testcases/invariant"
 	"github.com/netrixframework/tendermint-testing/util"
 	"github.com/spf13/cobra"
 )
@@ -29,10 +29,10 @@ var pctTestStrategy = &cobra.Command{
 				Depth:          6,
 				RecordFilePath: "/home/nagendra/data/testing/tendermint/t",
 			},
-			rskip.BlockVotes(common.NewSystemParams(4)),
+			invariant.PrecommitsInvariant(common.NewSystemParams(4)),
 		)
 
-		strategy = strategies.NewStrategyWithProperty(strategy, rskip.BlockVotesProperty())
+		strategy = strategies.NewStrategyWithProperty(strategy, invariant.PrecommitInvariantProperty())
 
 		driver := strategies.NewStrategyDriver(
 			&config.Config{
@@ -47,8 +47,8 @@ var pctTestStrategy = &cobra.Command{
 			&util.TMessageParser{},
 			strategy,
 			&strategies.StrategyConfig{
-				Iterations:       1000,
-				IterationTimeout: 30 * time.Second,
+				Iterations:       100,
+				IterationTimeout: 40 * time.Second,
 			},
 		)
 
