@@ -23,8 +23,8 @@ var pctTestStrategy = &cobra.Command{
 		termCh := make(chan os.Signal, 1)
 		signal.Notify(termCh, os.Interrupt, syscall.SIGTERM)
 
-		stateMachine := sm.NewStateMachine()
-		roundReached := stateMachine.Builder().
+		property := sm.NewStateMachine()
+		roundReached := property.Builder().
 			On(common.HeightReached(1), "SkipRounds").
 			On(common.RoundReached(2), "roundReached")
 
@@ -39,12 +39,12 @@ var pctTestStrategy = &cobra.Command{
 				RandSrc:        rand.NewSource(time.Now().UnixMilli()),
 				MaxEvents:      1000,
 				Depth:          6,
-				RecordFilePath: "/Users/srinidhin/Local/data/testing/tendermint/t",
+				RecordFilePath: "/home/nagendra/data/testing/tendermint/t",
 			},
 			rskip.RoundSkip(common.NewSystemParams(4), 1, 2),
 		)
 
-		strategy = strategies.NewStrategyWithProperty(strategy, stateMachine)
+		strategy = strategies.NewStrategyWithProperty(strategy, property)
 
 		driver := strategies.NewStrategyDriver(
 			&config.Config{
@@ -53,14 +53,14 @@ var pctTestStrategy = &cobra.Command{
 				LogConfig: config.LogConfig{
 					Format: "json",
 					Level:  "info",
-					Path:   "/Users/srinidhin/Local/data/testing/tendermint/t/checker.log",
+					Path:   "/home/nagendra/data/testing/tendermint/t/checker.log",
 				},
 			},
 			&util.TMessageParser{},
 			strategy,
 			&strategies.StrategyConfig{
-				Iterations:       10,
-				IterationTimeout: 45 * time.Second,
+				Iterations:       1000,
+				IterationTimeout: 30 * time.Second,
 			},
 		)
 

@@ -10,16 +10,7 @@ import (
 )
 
 func RoundSkip(sysParams *common.SystemParams, height, round int) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	roundReached := stateMachine.Builder().
-		On(common.HeightReached(height), "SkipRounds").
-		On(common.RoundReached(round), "roundReached")
-
-	roundReached.MarkSuccess()
-	roundReached.On(
-		common.DiffCommits(),
-		sm.FailStateLabel,
-	)
+	stateMachine := RoundSkipProperty()
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundAll)
@@ -65,4 +56,18 @@ func RoundSkip(sysParams *common.SystemParams, height, round int) *testlib.TestC
 	)
 	testCase.SetupFunc(common.Setup(sysParams))
 	return testCase
+}
+
+func RoundSkipProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	roundReached := property.Builder().
+		On(common.HeightReached(1), "SkipRounds").
+		On(common.RoundReached(2), "roundReached")
+
+	roundReached.MarkSuccess()
+	roundReached.On(
+		common.DiffCommits(),
+		sm.FailStateLabel,
+	)
+	return property
 }
