@@ -10,11 +10,7 @@ import (
 )
 
 func BlockVotes(sysParams *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-	init.MarkSuccess()
-	init.On(common.IsCommit(), sm.FailStateLabel)
-	init.On(common.IsEventNewRound(1), sm.FailStateLabel)
+	stateMachine := BlockVotesProperty()
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
@@ -45,4 +41,13 @@ func BlockVotes(sysParams *common.SystemParams) *testlib.TestCase {
 	)
 	testcase.SetupFunc(common.Setup(sysParams))
 	return testcase
+}
+
+func BlockVotesProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+	init.MarkSuccess()
+	init.On(common.IsCommit(), "Comitted")
+	init.On(common.IsEventNewRound(1), "NewRound")
+	return property
 }

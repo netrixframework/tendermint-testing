@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/netrixframework/netrix/config"
-	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/strategies"
 	"github.com/netrixframework/netrix/strategies/pct"
 	"github.com/netrixframework/tendermint-testing/common"
@@ -23,17 +22,6 @@ var pctTestStrategy = &cobra.Command{
 		termCh := make(chan os.Signal, 1)
 		signal.Notify(termCh, os.Interrupt, syscall.SIGTERM)
 
-		property := sm.NewStateMachine()
-		roundReached := property.Builder().
-			On(common.HeightReached(1), "SkipRounds").
-			On(common.RoundReached(2), "roundReached")
-
-		roundReached.MarkSuccess()
-		roundReached.On(
-			common.DiffCommits(),
-			sm.FailStateLabel,
-		)
-
 		var strategy strategies.Strategy = pct.NewPCTStrategyWithTestCase(
 			&pct.PCTStrategyConfig{
 				RandSrc:        rand.NewSource(time.Now().UnixMilli()),
@@ -41,10 +29,10 @@ var pctTestStrategy = &cobra.Command{
 				Depth:          6,
 				RecordFilePath: "/home/nagendra/data/testing/tendermint/t",
 			},
-			rskip.RoundSkip(common.NewSystemParams(4), 1, 2),
+			rskip.BlockVotes(common.NewSystemParams(4)),
 		)
 
-		strategy = strategies.NewStrategyWithProperty(strategy, property)
+		strategy = strategies.NewStrategyWithProperty(strategy, rskip.BlockVotesProperty())
 
 		driver := strategies.NewStrategyDriver(
 			&config.Config{
