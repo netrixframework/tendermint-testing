@@ -10,20 +10,6 @@ import (
 )
 
 func NilPrevotes(sysParams *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-
-	nilQuorumDelivered := init.On(
-		sm.Count("nilPrevotesDelivered").Geq(2*sysParams.F+1),
-		"nilQuorumDelivered",
-	)
-	nilQuorumDelivered.On(
-		sm.IsMessageSend().
-			And(sm.IsMessageFromF(common.GetRandomReplica)).
-			And(common.IsMessageType(util.Precommit)).
-			And(common.IsNilVote()),
-		sm.SuccessStateLabel,
-	)
 
 	filters := testlib.NewFilterSet()
 	// We don't deliver any proposal and hence we should see that replicas other than the proposer prevote nil.
@@ -49,9 +35,27 @@ func NilPrevotes(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"NilPrevotes",
 		1*time.Minute,
-		stateMachine,
+		NilPrevotesProperty(sysParams),
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams, common.PickRandomReplica()))
 	return testcase
+}
+
+func NilPrevotesProperty(sysParams *common.SystemParams) *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+
+	nilQuorumDelivered := init.On(
+		sm.Count("nilPrevotesDelivered").Geq(2*sysParams.F+1),
+		"nilQuorumDelivered",
+	)
+	nilQuorumDelivered.On(
+		sm.IsMessageSend().
+			And(sm.IsMessageFromF(common.GetRandomReplica)).
+			And(common.IsMessageType(util.Precommit)).
+			And(common.IsNilVote()),
+		sm.SuccessStateLabel,
+	)
+	return property
 }
