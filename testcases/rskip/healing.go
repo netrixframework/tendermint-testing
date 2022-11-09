@@ -10,21 +10,7 @@ import (
 )
 
 func CommitAfterRoundSkip(sp *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-
-	roundOne := init.On(
-		common.RoundReached(1),
-		"Round1",
-	)
-	roundOne.On(
-		common.IsCommitForProposal("zeroProposal"),
-		sm.SuccessStateLabel,
-	)
-	roundOne.On(
-		common.DiffCommits(),
-		sm.FailStateLabel,
-	)
+	stateMachine := CommitAfterRoundSkipProperty()
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundAll)
@@ -74,4 +60,23 @@ func CommitAfterRoundSkip(sp *common.SystemParams) *testlib.TestCase {
 	)
 	testcase.SetupFunc(common.Setup(sp))
 	return testcase
+}
+
+func CommitAfterRoundSkipProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+
+	roundOne := init.On(
+		common.RoundReached(1),
+		"Round1",
+	)
+	roundOne.On(
+		common.IsCommitForProposal("zeroProposal"),
+		sm.SuccessStateLabel,
+	)
+	roundOne.On(
+		common.DiffCommits(),
+		sm.FailStateLabel,
+	)
+	return property
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/netrixframework/netrix/strategies"
 	"github.com/netrixframework/netrix/strategies/pct"
 	"github.com/netrixframework/tendermint-testing/common"
-	"github.com/netrixframework/tendermint-testing/testcases/invariant"
+	"github.com/netrixframework/tendermint-testing/testcases/lockedvalue"
 	"github.com/netrixframework/tendermint-testing/util"
 	"github.com/spf13/cobra"
 )
@@ -29,10 +29,10 @@ var pctTestStrategy = &cobra.Command{
 				Depth:          6,
 				RecordFilePath: "/home/nagendra/data/testing/tendermint/t",
 			},
-			invariant.PrecommitsInvariant(common.NewSystemParams(4)),
+			lockedvalue.Relocked(common.NewSystemParams(4)),
 		)
 
-		strategy = strategies.NewStrategyWithProperty(strategy, invariant.PrecommitInvariantProperty())
+		strategy = strategies.NewStrategyWithProperty(strategy, lockedvalue.RelockedProperty())
 
 		driver := strategies.NewStrategyDriver(
 			&config.Config{

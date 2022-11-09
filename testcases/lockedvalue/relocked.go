@@ -23,27 +23,7 @@ func changeVote() testlib.Action {
 
 func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
 
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-	init.On(common.IsCommit(), sm.FailStateLabel)
-	// We observe a precommit for round 0 proposal from replica "h"
-	valueLocked := init.On(
-		sm.IsMessageSend().
-			And(common.IsVoteFromPart("h")).
-			And(common.IsMessageType(util.Precommit)).
-			And(common.IsVoteForProposal("zeroProposal")),
-		"ValueLocked",
-	)
-	// Wait until all move to round 1
-	roundOne := valueLocked.On(common.RoundReached(1), "RoundOne")
-	// We observe a precommit for the new proposal from h
-	roundOne.On(
-		sm.IsMessageSend().
-			And(common.IsMessageType(util.Precommit)).
-			And(common.IsVoteFromPart("h")).
-			And(common.IsVoteForProposal("newProposal")),
-		sm.SuccessStateLabel,
-	)
+	stateMachine := RelockedProperty()
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundAll)
@@ -107,4 +87,29 @@ func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase.SetupFunc(common.Setup(sysParams))
 	return testcase
 
+}
+
+func RelockedProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+	init.On(common.IsCommit(), "Committed")
+	// We observe a precommit for round 0 proposal from replica "h"
+	valueLocked := init.On(
+		sm.IsMessageSend().
+			And(common.IsVoteFromPart("h")).
+			And(common.IsMessageType(util.Precommit)).
+			And(common.IsVoteForProposal("zeroProposal")),
+		"ValueLocked",
+	)
+	// Wait until all move to round 1
+	roundOne := valueLocked.On(common.RoundReached(1), "RoundOne")
+	// We observe a precommit for the new proposal from h
+	roundOne.On(
+		sm.IsMessageSend().
+			And(common.IsMessageType(util.Precommit)).
+			And(common.IsVoteFromPart("h")).
+			And(common.IsVoteForProposal("newProposal")),
+		sm.SuccessStateLabel,
+	)
+	return property
 }
