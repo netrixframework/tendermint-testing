@@ -38,15 +38,8 @@ func changeProposalToNil(e *types.Event, c *testlib.Context) []*types.Message {
 // 	3. Replicas should prevote and precommit the earlier block and commit
 func LockedCommit(sysParams *common.SystemParams) *testlib.TestCase {
 
-	stateMachine := sm.NewStateMachine()
-	initialState := stateMachine.Builder()
-	initialState.On(common.IsCommit(), sm.FailStateLabel)
-	round1 := initialState.On(common.RoundReached(1), "round1")
-	round1.On(common.IsCommit(), sm.SuccessStateLabel)
-	round1.On(common.RoundReached(2), sm.FailStateLabel)
-
 	filters := testlib.NewFilterSet()
-	filters.AddFilter(common.TrackRoundAll)
+	filters.AddFilter(common.TrackRoundTwoThirds)
 	filters.AddFilter(
 		testlib.If(
 			sm.IsMessageSend().And(common.IsVoteFromFaulty()),
@@ -75,8 +68,18 @@ func LockedCommit(sysParams *common.SystemParams) *testlib.TestCase {
 		),
 	)
 
-	testcase := testlib.NewTestCase("WrongProposal", 30*time.Second, stateMachine, filters)
+	testcase := testlib.NewTestCase("WrongProposal", 30*time.Second, LockedCommitProperty(), filters)
 	testcase.SetupFunc(common.Setup(sysParams))
 
 	return testcase
+}
+
+func LockedCommitProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	initialState := property.Builder()
+	initialState.On(common.IsCommit(), "Committed")
+	round1 := initialState.On(common.RoundReached(1), "round1")
+	round1.On(common.IsCommit(), sm.SuccessStateLabel)
+	round1.On(common.RoundReached(2), "NewRoundReached")
+	return property
 }

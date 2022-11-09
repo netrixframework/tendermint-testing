@@ -29,10 +29,10 @@ var pctTestStrategy = &cobra.Command{
 				Depth:          6,
 				RecordFilePath: "/home/nagendra/data/testing/tendermint/t",
 			},
-			lockedvalue.Relocked(common.NewSystemParams(4)),
+			lockedvalue.LockedCommit(common.NewSystemParams(4)),
 		)
 
-		strategy = strategies.NewStrategyWithProperty(strategy, lockedvalue.RelockedProperty())
+		strategy = strategies.NewStrategyWithProperty(strategy, lockedvalue.LockedCommitProperty())
 
 		driver := strategies.NewStrategyDriver(
 			&config.Config{
