@@ -10,23 +10,6 @@ import (
 )
 
 func ProposalNilPrevote(sp *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-
-	init.On(
-		sm.IsMessageSend().
-			And(common.IsMessageFromRound(0)).
-			And(common.IsVoteFromPart("h")).
-			And(common.IsNotNilVote()),
-		sm.FailStateLabel,
-	)
-	init.On(
-		sm.IsMessageSend().
-			And(common.IsMessageFromRound(0)).
-			And(common.IsVoteFromPart("h")).
-			And(common.IsNilVote()),
-		sm.SuccessStateLabel,
-	)
 
 	cascade := testlib.NewFilterSet()
 
@@ -44,9 +27,30 @@ func ProposalNilPrevote(sp *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"ProposalNilPrevote",
 		30*time.Second,
-		stateMachine,
+		ProposalNilPrevoteProperty(),
 		cascade,
 	)
 	testcase.SetupFunc(common.Setup(sp))
 	return testcase
+}
+
+func ProposalNilPrevoteProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+
+	init.On(
+		sm.IsMessageSend().
+			And(common.IsMessageFromRound(0)).
+			And(common.IsVoteFromPart("h")).
+			And(common.IsNotNilVote()),
+		"NotNilVote",
+	)
+	init.On(
+		sm.IsMessageSend().
+			And(common.IsMessageFromRound(0)).
+			And(common.IsVoteFromPart("h")).
+			And(common.IsNilVote()),
+		sm.SuccessStateLabel,
+	)
+	return property
 }

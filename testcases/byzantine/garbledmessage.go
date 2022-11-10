@@ -12,12 +12,6 @@ import (
 )
 
 func GarbledMessage(sysParams *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	stateMachine.Builder().On(
-		common.IsCommit(),
-		sm.SuccessStateLabel,
-	)
-
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(
@@ -31,11 +25,20 @@ func GarbledMessage(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"GarbledMessages",
 		2*time.Minute,
-		stateMachine,
+		GarbledMessageProperty(),
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams))
 	return testcase
+}
+
+func GarbledMessageProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	property.Builder().On(
+		common.IsCommit(),
+		sm.SuccessStateLabel,
+	)
+	return property
 }
 
 func garbleMessage() testlib.Action {

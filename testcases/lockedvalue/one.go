@@ -10,30 +10,6 @@ import (
 )
 
 func ExpectUnlock(sysParams *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-
-	roundOne := init.On(common.RoundReached(1), "RoundOne")
-
-	roundOne.On(
-		sm.IsMessageSend().
-			And(common.IsMessageFromRound(1).Not()).
-			And(common.IsMessageFromRound(0).Not()).
-			And(common.IsVoteFromPart("h")).
-			And(common.IsVoteForProposal("zeroProposal")),
-		sm.FailStateLabel,
-	)
-	roundOne.On(
-		sm.IsMessageSend().
-			And(common.IsMessageFromRound(1).Not()).
-			And(common.IsMessageFromRound(0).Not()).
-			And(common.IsVoteFromPart("h")).
-			And(common.IsVoteForProposal("zeroProposal").Not()),
-		sm.SuccessStateLabel,
-	)
-	init.On(
-		common.IsCommit(), sm.FailStateLabel,
-	)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundAll)
@@ -78,9 +54,37 @@ func ExpectUnlock(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"ExpectUnlock",
 		1*time.Minute,
-		stateMachine,
+		ExpectUnlockProperty(),
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams))
 	return testcase
+}
+
+func ExpectUnlockProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+
+	roundOne := init.On(common.RoundReached(1), "RoundOne")
+
+	roundOne.On(
+		sm.IsMessageSend().
+			And(common.IsMessageFromRound(1).Not()).
+			And(common.IsMessageFromRound(0).Not()).
+			And(common.IsVoteFromPart("h")).
+			And(common.IsVoteForProposal("zeroProposal")),
+		"WrongVote",
+	)
+	roundOne.On(
+		sm.IsMessageSend().
+			And(common.IsMessageFromRound(1).Not()).
+			And(common.IsMessageFromRound(0).Not()).
+			And(common.IsVoteFromPart("h")).
+			And(common.IsVoteForProposal("zeroProposal").Not()),
+		sm.SuccessStateLabel,
+	)
+	init.On(
+		common.IsCommit(), "Committed",
+	)
+	return property
 }

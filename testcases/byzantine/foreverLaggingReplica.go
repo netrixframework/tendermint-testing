@@ -10,19 +10,7 @@ import (
 )
 
 func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-	init.On(common.IsCommit(), sm.FailStateLabel)
-
-	allowCatchUp := init.On(common.RoundReached(5), "allowCatchUp")
-	allowCatchUp.On(
-		common.IsCommit(),
-		sm.SuccessStateLabel,
-	)
-	allowCatchUp.On(
-		common.DiffCommits(),
-		sm.FailStateLabel,
-	)
+	stateMachine := ForeverLaggingReplicaProperty()
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundTwoThirds)
@@ -81,4 +69,21 @@ func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
 	)
 	testcase.SetupFunc(common.Setup(sp))
 	return testcase
+}
+
+func ForeverLaggingReplicaProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+	init.On(common.IsCommit(), "Committed")
+
+	allowCatchUp := init.On(common.RoundReached(5), "allowCatchUp")
+	allowCatchUp.On(
+		common.IsCommit(),
+		sm.SuccessStateLabel,
+	)
+	allowCatchUp.On(
+		common.DiffCommits(),
+		"DiffCommits",
+	)
+	return property
 }

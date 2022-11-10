@@ -11,7 +11,7 @@ import (
 	"github.com/netrixframework/netrix/strategies"
 	"github.com/netrixframework/netrix/strategies/pct"
 	"github.com/netrixframework/tendermint-testing/common"
-	"github.com/netrixframework/tendermint-testing/testcases/mainpath"
+	"github.com/netrixframework/tendermint-testing/testcases/lockedvalue"
 	"github.com/netrixframework/tendermint-testing/util"
 	"github.com/spf13/cobra"
 )
@@ -31,10 +31,10 @@ var pctTestStrategy = &cobra.Command{
 				Depth:          6,
 				RecordFilePath: "/home/nagendra/data/testing/tendermint/t",
 			},
-			mainpath.NilPrevotes(sysPrams),
+			lockedvalue.DifferentDecisions(sysPrams),
 		)
 
-		strategy = strategies.NewStrategyWithProperty(strategy, mainpath.NilPrevotesProperty(sysPrams))
+		strategy = strategies.NewStrategyWithProperty(strategy, lockedvalue.DifferentDecisionsProperty())
 
 		driver := strategies.NewStrategyDriver(
 			&config.Config{

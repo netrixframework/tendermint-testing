@@ -12,16 +12,6 @@ import (
 )
 
 func HigherRound(sysParams *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-	init.On(
-		common.IsCommit(),
-		sm.SuccessStateLabel,
-	)
-	init.On(
-		common.DiffCommits(),
-		sm.FailStateLabel,
-	)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
@@ -36,7 +26,7 @@ func HigherRound(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"HigherRound",
 		2*time.Minute,
-		stateMachine,
+		HigherRoundProperty(),
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams))
@@ -84,4 +74,18 @@ func changeVoteRound() testlib.Action {
 		}
 		return []*types.Message{c.NewMessage(m, msgB, newVote)}
 	}
+}
+
+func HigherRoundProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+	init.On(
+		common.IsCommit(),
+		sm.SuccessStateLabel,
+	)
+	init.On(
+		common.DiffCommits(),
+		"DifferentCommits",
+	)
+	return property
 }

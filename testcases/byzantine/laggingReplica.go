@@ -10,19 +10,7 @@ import (
 )
 
 func LaggingReplica(sp *common.SystemParams, rounds int, timeout time.Duration) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-	init.On(common.IsCommit(), sm.FailStateLabel)
-
-	allowCatchUp := init.On(common.RoundReached(rounds), "allowCatchUp")
-	allowCatchUp.On(
-		common.IsCommit(),
-		sm.SuccessStateLabel,
-	)
-	allowCatchUp.On(
-		common.DiffCommits(),
-		sm.FailStateLabel,
-	)
+	stateMachine := LaggingReplicaProperty(rounds)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundTwoThirds)
@@ -63,4 +51,21 @@ func LaggingReplica(sp *common.SystemParams, rounds int, timeout time.Duration) 
 	)
 	testcase.SetupFunc(common.Setup(sp))
 	return testcase
+}
+
+func LaggingReplicaProperty(rounds int) *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+	init.On(common.IsCommit(), sm.FailStateLabel)
+
+	allowCatchUp := init.On(common.RoundReached(rounds), "allowCatchUp")
+	allowCatchUp.On(
+		common.IsCommit(),
+		sm.SuccessStateLabel,
+	)
+	allowCatchUp.On(
+		common.DiffCommits(),
+		"DifferentCommits",
+	)
+	return property
 }

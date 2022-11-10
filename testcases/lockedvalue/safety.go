@@ -26,30 +26,6 @@ func safetySetup(c *testlib.Context) {
 }
 
 func DifferentDecisions(sysParams *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-
-	init.On(common.IsCommit(), sm.FailStateLabel)
-	precommitOld := init.On(
-		sm.IsMessageSend().
-			And(common.IsMessageType(util.Precommit)).
-			And(common.IsVoteFromPart("h")).
-			And(common.IsVoteForProposal("zeroProposal")),
-		"PrecommittedOld",
-	)
-	precommitOld.MarkSuccess()
-
-	precommitOld.On(
-		sm.IsMessageSend().
-			And(common.IsMessageType(util.Precommit)).
-			And(common.IsVoteFromPart("h")).
-			And(common.IsVoteForProposal("newProposal")),
-		sm.FailStateLabel,
-	)
-	precommitOld.On(
-		common.DiffCommits(),
-		sm.FailStateLabel,
-	)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundAll)
@@ -175,9 +151,37 @@ func DifferentDecisions(sysParams *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"DifferentDecisions",
 		3*time.Minute,
-		stateMachine,
+		DifferentDecisionsProperty(),
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sysParams, safetySetup))
 	return testcase
+}
+
+func DifferentDecisionsProperty() *sm.StateMachine {
+	stateMachine := sm.NewStateMachine()
+	init := stateMachine.Builder()
+
+	init.On(common.IsCommit(), sm.FailStateLabel)
+	precommitOld := init.On(
+		sm.IsMessageSend().
+			And(common.IsMessageType(util.Precommit)).
+			And(common.IsVoteFromPart("h")).
+			And(common.IsVoteForProposal("zeroProposal")),
+		"PrecommittedOld",
+	)
+	precommitOld.MarkSuccess()
+
+	precommitOld.On(
+		sm.IsMessageSend().
+			And(common.IsMessageType(util.Precommit)).
+			And(common.IsVoteFromPart("h")).
+			And(common.IsVoteForProposal("newProposal")),
+		sm.FailStateLabel,
+	)
+	precommitOld.On(
+		common.DiffCommits(),
+		sm.FailStateLabel,
+	)
+	return stateMachine
 }

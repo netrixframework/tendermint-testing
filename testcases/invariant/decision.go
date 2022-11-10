@@ -9,14 +9,6 @@ import (
 )
 
 func NotNilDecide(sp *common.SystemParams) *testlib.TestCase {
-	stateMachine := sm.NewStateMachine()
-	init := stateMachine.Builder()
-	init.MarkSuccess()
-	init.On(
-		common.IsNilCommit(),
-		sm.FailStateLabel,
-	)
-
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(
@@ -38,9 +30,20 @@ func NotNilDecide(sp *common.SystemParams) *testlib.TestCase {
 	testcase := testlib.NewTestCase(
 		"NotNilDecide",
 		2*time.Minute,
-		stateMachine,
+		NotNilDecideProperty(),
 		filters,
 	)
 	testcase.SetupFunc(common.Setup(sp))
 	return testcase
+}
+
+func NotNilDecideProperty() *sm.StateMachine {
+	property := sm.NewStateMachine()
+	init := property.Builder()
+	init.MarkSuccess()
+	init.On(
+		common.IsNilCommit(),
+		"NilDecided",
+	)
+	return property
 }
