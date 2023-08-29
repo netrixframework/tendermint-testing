@@ -1,4 +1,4 @@
-package lockedvalue
+package tests
 
 import (
 	"time"
@@ -25,7 +25,7 @@ func safetySetup(c *testlib.Context) {
 	}).Info("Partitioned replicas")
 }
 
-func DifferentDecisions(sysParams *common.SystemParams) *testlib.TestCase {
+func DifferentDecisionsTest(sysParams *common.SystemParams) *testlib.TestCase {
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundAll)
@@ -177,11 +177,11 @@ func DifferentDecisionsProperty() *sm.StateMachine {
 			And(common.IsMessageType(util.Precommit)).
 			And(common.IsVoteFromPart("h")).
 			And(common.IsVoteForProposal("newProposal")),
-		sm.FailStateLabel,
+		"NewCommit",
 	)
 	precommitOld.On(
 		common.DiffCommits(),
-		sm.FailStateLabel,
+		"DiffCommits",
 	)
 	return stateMachine
 }

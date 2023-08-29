@@ -1,4 +1,4 @@
-package lockedvalue
+package tests
 
 import (
 	"time"
@@ -21,7 +21,7 @@ func changeVote() testlib.Action {
 	}
 }
 
-func Relocked(sysParams *common.SystemParams) *testlib.TestCase {
+func RelockedTest(sysParams *common.SystemParams) *testlib.TestCase {
 
 	stateMachine := RelockedProperty()
 

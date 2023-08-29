@@ -3,6 +3,7 @@ package common
 import (
 	"strconv"
 
+	"github.com/netrixframework/netrix/log"
 	"github.com/netrixframework/netrix/sm"
 	"github.com/netrixframework/netrix/testlib"
 	"github.com/netrixframework/netrix/types"
@@ -12,11 +13,12 @@ import (
 func IsCommit() sm.Condition {
 	return func(e *types.Event, c *sm.Context) bool {
 		eType, ok := e.Type.(*types.GenericEventType)
-		if ok && eType.T == "Committing block" {
+		if ok && eType.T == "CommittingBlock" {
 			blockID, ok := eType.Params["block_id"]
 			if ok {
 				c.Vars.Set(commitBlockIDKey, blockID)
 			}
+			c.Logger.Debug("Block committed")
 			return true
 		}
 		return false
@@ -26,7 +28,7 @@ func IsCommit() sm.Condition {
 func IsNilCommit() sm.Condition {
 	return func(e *types.Event, c *sm.Context) bool {
 		eType, ok := e.Type.(*types.GenericEventType)
-		if ok && eType.T == "Committing block" {
+		if ok && eType.T == "CommittingBlock" {
 			blockID, ok := eType.Params["block_id"]
 			return ok && blockID == ""
 		}
@@ -41,7 +43,7 @@ func IsCommitForProposal(prop string) sm.Condition {
 			return false
 		}
 		eType, ok := e.Type.(*types.GenericEventType)
-		if ok && eType.T == "Committing block" {
+		if ok && eType.T == "CommittingBlock" {
 			blockID, ok := eType.Params["block_id"]
 			return ok && blockID == proposal
 		}
@@ -212,6 +214,7 @@ func RoundReached(r int) sm.Condition {
 	return func(e *types.Event, c *sm.Context) bool {
 		curRound, ok := c.Vars.GetInt(curRoundKey)
 		if ok && curRound >= r {
+			c.Logger.With(log.LogParams{"round": r}).Debug("Round reached")
 			return true
 		}
 		return false
@@ -349,7 +352,7 @@ func IsEventNewRound(r int) sm.Condition {
 func DiffCommits() sm.Condition {
 	return func(e *types.Event, c *sm.Context) bool {
 		eType, ok := e.Type.(*types.GenericEventType)
-		if ok && eType.T == "Committing block" {
+		if ok && eType.T == "CommittingBlock" {
 			blockID, ok := eType.Params["block_id"]
 			if ok {
 				curBlockID, exists := c.Vars.GetString(commitBlockIDKey)

@@ -1,4 +1,4 @@
-package mainpath
+package tests
 
 import (
 	"time"
@@ -9,7 +9,7 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func ProposalNilPrevote(sp *common.SystemParams) *testlib.TestCase {
+func ProposalNilPrevoteTest(sp *common.SystemParams) *testlib.TestCase {
 
 	cascade := testlib.NewFilterSet()
 

@@ -1,4 +1,4 @@
-package rskip
+package tests
 
 import (
 	"time"
@@ -9,7 +9,7 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func BlockVotes(sysParams *common.SystemParams) *testlib.TestCase {
+func BlockVotesTest(sysParams *common.SystemParams) *testlib.TestCase {
 	stateMachine := BlockVotesProperty()
 
 	filters := testlib.NewFilterSet()

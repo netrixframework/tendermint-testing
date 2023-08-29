@@ -1,4 +1,4 @@
-package mainpath
+package tests
 
 import (
 	"time"
@@ -9,7 +9,7 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func NilPrevotes(sysParams *common.SystemParams) *testlib.TestCase {
+func NilPrevotesTest(sysParams *common.SystemParams) *testlib.TestCase {
 
 	filters := testlib.NewFilterSet()
 	// We don't deliver any proposal and hence we should see that replicas other than the proposer prevote nil.

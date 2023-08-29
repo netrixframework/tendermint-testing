@@ -1,4 +1,4 @@
-package byzantine
+package tests
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func HigherRound(sysParams *common.SystemParams) *testlib.TestCase {
+func HigherRoundTest(sysParams *common.SystemParams) *testlib.TestCase {
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(

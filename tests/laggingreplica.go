@@ -1,4 +1,4 @@
-package byzantine
+package tests
 
 import (
 	"time"
@@ -9,8 +9,8 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
-	stateMachine := ForeverLaggingReplicaProperty()
+func LaggingReplicaTest(sp *common.SystemParams, rounds int, timeout time.Duration) *testlib.TestCase {
+	stateMachine := LaggingReplicaProperty(rounds)
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundTwoThirds)
@@ -34,6 +34,7 @@ func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
 	filters.AddFilter(
 		testlib.If(
 			sm.IsMessageSend().
+				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageToPart("h")).
 				And(common.IsMessageType(util.Prevote).Or(common.IsMessageType(util.Precommit))).
 				And(stateMachine.InState("allowCatchUp").Not()),
@@ -41,29 +42,10 @@ func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
 			testlib.DropMessage(),
 		),
 	)
-	filters.AddFilter(
-		testlib.If(
-			sm.IsMessageSend().
-				And(common.IsMessageToPart("h")).
-				And(common.IsMessageFromCurRound()),
-		).Then(
-			testlib.DeliverMessage(),
-		),
-	)
-	filters.AddFilter(
-		testlib.If(
-			sm.IsMessageSend().
-				And(common.IsMessageToPart("h")).
-				And(common.IsMessageType(util.Prevote).Or(common.IsMessageType(util.Precommit))).
-				And(common.MessageCurRoundGt(2)),
-		).Then(
-			testlib.DropMessage(),
-		),
-	)
 
 	testcase := testlib.NewTestCase(
 		"LaggingReplica",
-		25*time.Minute,
+		timeout,
 		stateMachine,
 		filters,
 	)
@@ -71,19 +53,19 @@ func ForeverLaggingReplica(sp *common.SystemParams) *testlib.TestCase {
 	return testcase
 }
 
-func ForeverLaggingReplicaProperty() *sm.StateMachine {
+func LaggingReplicaProperty(rounds int) *sm.StateMachine {
 	property := sm.NewStateMachine()
 	init := property.Builder()
-	init.On(common.IsCommit(), "Committed")
+	init.On(common.IsCommit(), sm.FailStateLabel)
 
-	allowCatchUp := init.On(common.RoundReached(5), "allowCatchUp")
+	allowCatchUp := init.On(common.RoundReached(rounds), "allowCatchUp")
 	allowCatchUp.On(
 		common.IsCommit(),
 		sm.SuccessStateLabel,
 	)
 	allowCatchUp.On(
 		common.DiffCommits(),
-		"DiffCommits",
+		"DifferentCommits",
 	)
 	return property
 }

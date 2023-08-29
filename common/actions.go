@@ -83,11 +83,16 @@ func ChangeVoteToProposalMessage(proposalMessageLabel string) testlib.Action {
 		if !ok {
 			return []*types.Message{}
 		}
-		tMsg, ok := util.GetParsedMessage(newProposalMessage)
+		proposalTMsg, ok := util.GetParsedMessage(newProposalMessage)
 		if !ok {
 			return []*types.Message{}
 		}
-		blockID, ok := util.GetProposalBlockID(tMsg)
+		blockID, ok := util.GetProposalBlockID(proposalTMsg)
+		if !ok {
+			return []*types.Message{}
+		}
+		c.Logger.Debug("Fetched proposal block ID")
+		tMsg, ok := util.GetParsedMessage(message)
 		if !ok {
 			return []*types.Message{}
 		}
@@ -95,6 +100,7 @@ func ChangeVoteToProposalMessage(proposalMessageLabel string) testlib.Action {
 		if !ok {
 			return []*types.Message{}
 		}
+		c.Logger.Debug("Fetched vote validator")
 		var replica *types.Replica = nil
 		for _, r := range c.ReplicaStore.Iter() {
 			addr, err := util.GetReplicaAddress(r)
@@ -109,6 +115,7 @@ func ChangeVoteToProposalMessage(proposalMessageLabel string) testlib.Action {
 		if replica == nil {
 			return []*types.Message{}
 		}
+		c.Logger.Debug("Changing vote to proposal block")
 		newVote, err := util.ChangeVote(replica, tMsg, blockID)
 		if err != nil {
 			return []*types.Message{}
@@ -117,6 +124,7 @@ func ChangeVoteToProposalMessage(proposalMessageLabel string) testlib.Action {
 		if err != nil {
 			return []*types.Message{}
 		}
+		c.Logger.Debug("Successfully changed vote")
 		return []*types.Message{c.NewMessage(message, msgB, newVote)}
 	}
 }

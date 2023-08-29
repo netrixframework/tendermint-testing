@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -11,57 +12,66 @@ import (
 	"github.com/netrixframework/netrix/strategies"
 	"github.com/netrixframework/netrix/strategies/pct"
 	"github.com/netrixframework/tendermint-testing/common"
-	"github.com/netrixframework/tendermint-testing/testcases/lockedvalue"
 	"github.com/netrixframework/tendermint-testing/util"
 	"github.com/spf13/cobra"
 )
 
-var pctTestStrategy = &cobra.Command{
-	Use: "pct-test",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		termCh := make(chan os.Signal, 1)
-		signal.Notify(termCh, os.Interrupt, syscall.SIGTERM)
+func PCTTestStrategy() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:  "pct-test [test]",
+		Long: "Run PCT with a test case to guide the exploration and measure outcomes",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			termCh := make(chan os.Signal, 1)
+			signal.Notify(termCh, os.Interrupt, syscall.SIGTERM)
 
-		sysPrams := common.NewSystemParams(4)
+			sysParams := common.NewSystemParams(4)
 
-		var strategy strategies.Strategy = pct.NewPCTStrategyWithTestCase(
-			&pct.PCTStrategyConfig{
-				RandSrc:        rand.NewSource(time.Now().UnixMilli()),
-				MaxEvents:      1000,
-				Depth:          6,
-				RecordFilePath: "/home/nagendra/data/testing/tendermint/t",
-			},
-			lockedvalue.DifferentDecisions(sysPrams),
-		)
+			testCase, property := GetTest(args[0], sysParams)
+			if testCase == nil || property == nil {
+				return errors.New("invalid test")
+			}
 
-		strategy = strategies.NewStrategyWithProperty(strategy, lockedvalue.DifferentDecisionsProperty())
-
-		driver := strategies.NewStrategyDriver(
-			&config.Config{
-				APIServerAddr: "127.0.0.1:7074",
-				NumReplicas:   4,
-				LogConfig: config.LogConfig{
-					Format: "json",
-					Level:  "info",
-					Path:   "/home/nagendra/data/testing/tendermint/t/checker.log",
+			var strategy strategies.Strategy = pct.NewPCTStrategyWithTestCase(
+				&pct.PCTStrategyConfig{
+					RandSrc:        rand.NewSource(time.Now().UnixMilli()),
+					MaxEvents:      1000,
+					Depth:          6,
+					RecordFilePath: "results",
 				},
-			},
-			&util.TMessageParser{},
-			strategy,
-			&strategies.StrategyConfig{
-				Iterations:       100,
-				IterationTimeout: 40 * time.Second,
-			},
-		)
+				testCase,
+			)
 
-		go func() {
-			<-termCh
-			driver.Stop()
-		}()
+			strategy = strategies.NewStrategyWithProperty(strategy, property)
 
-		if err := driver.Start(); err != nil {
-			panic(err)
-		}
-		return nil
-	},
+			driver := strategies.NewStrategyDriver(
+				&config.Config{
+					APIServerAddr: "127.0.0.1:7074",
+					NumReplicas:   4,
+					LogConfig: config.LogConfig{
+						Format: "json",
+						Level:  "info",
+						Path:   "results/checker.log",
+					},
+				},
+				&util.TMessageParser{},
+				strategy,
+				&strategies.StrategyConfig{
+					Iterations:       60,
+					IterationTimeout: 80 * time.Second,
+				},
+			)
+
+			go func() {
+				<-termCh
+				driver.Stop()
+			}()
+
+			if err := driver.Start(); err != nil {
+				panic(err)
+			}
+			return nil
+		},
+	}
+	return cmd
 }

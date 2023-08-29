@@ -1,4 +1,4 @@
-package invariant
+package tests
 
 import (
 	"time"
@@ -10,7 +10,7 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func PrecommitsInvariant(sp *common.SystemParams) *testlib.TestCase {
+func PrecommitsInvariantTest() *testlib.TestCase {
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(

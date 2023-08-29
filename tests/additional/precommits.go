@@ -1,4 +1,4 @@
-package mainpath
+package additional
 
 import (
 	"time"
@@ -9,52 +9,50 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func QuorumPrevotes(sysParams *common.SystemParams) *testlib.TestCase {
-
+// When quorum precommit and are delivered, you expect a decision
+func QuorumPrecommits(sp *common.SystemParams) *testlib.TestCase {
 	filters := testlib.NewFilterSet()
-
 	filters.AddFilter(
 		testlib.If(
 			sm.IsMessageSend().
+				And(common.IsMessageFromRound(0)).
 				And(common.IsMessageType(util.Proposal)),
 		).Then(
 			common.RecordProposal("proposal"),
 			testlib.DeliverMessage(),
 		),
 	)
-
 	filters.AddFilter(
 		testlib.If(
-			sm.IsMessageReceive().
+			sm.IsMessageSend().
 				And(common.IsMessageToPart("h")).
-				And(common.IsMessageType(util.Prevote)).
+				And(common.IsMessageType(util.Precommit)).
 				And(common.IsVoteForProposal("proposal")),
 		).Then(
-			testlib.IncrCounter(sm.Count("prevotesDelivered")),
+			testlib.IncrCounter(sm.Count("precommitsSeen")),
 		),
 	)
 
 	stateMachine := sm.NewStateMachine()
 	init := stateMachine.Builder()
-
-	quorumDelivered := init.On(
-		sm.Count("prevotesDelivered").Geq(2*sysParams.F+1),
-		"quorumDelivered",
+	init.On(
+		common.IsCommitForProposal("proposal"),
+		sm.SuccessStateLabel,
 	)
-	quorumDelivered.On(
-		sm.IsMessageSend().
-			And(common.IsVoteFromPart("h")).
-			And(common.IsMessageType(util.Precommit)).
-			And(common.IsVoteForProposal("proposal")),
+	init.On(
+		sm.Count("precommitsSeen").Geq(2*sp.F+1),
+		"quorumPrecommitsSeen",
+	).On(
+		common.IsCommitForProposal("proposal"),
 		sm.SuccessStateLabel,
 	)
 
 	testcase := testlib.NewTestCase(
-		"QuorumPrevotes",
+		"QuorumPrecommits",
 		1*time.Minute,
 		stateMachine,
 		filters,
 	)
-	testcase.SetupFunc(common.Setup(sysParams))
+	testcase.SetupFunc(common.Setup(sp))
 	return testcase
 }

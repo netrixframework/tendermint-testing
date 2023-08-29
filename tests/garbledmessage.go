@@ -1,4 +1,4 @@
-package byzantine
+package tests
 
 import (
 	"math/rand"
@@ -11,7 +11,7 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func GarbledMessage(sysParams *common.SystemParams) *testlib.TestCase {
+func GarbledMessageTest(sysParams *common.SystemParams) *testlib.TestCase {
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(

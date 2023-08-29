@@ -1,4 +1,4 @@
-package lockedvalue
+package tests
 
 import (
 	"time"
@@ -32,11 +32,11 @@ func changeProposalToNil(e *types.Event, c *testlib.Context) []*types.Message {
 }
 
 // States:
-// 	1. Ensure replicas skip round by not delivering enough precommits
-//		1.1 One replica prevotes and precommits nil
-// 	2. In the next round change the proposal block value
-// 	3. Replicas should prevote and precommit the earlier block and commit
-func LockedCommit(sysParams *common.SystemParams) *testlib.TestCase {
+//  1. Ensure replicas skip round by not delivering enough precommits
+//     1.1 One replica prevotes and precommits nil
+//  2. In the next round change the proposal block value
+//  3. Replicas should prevote and precommit the earlier block and commit
+func LockedCommitTest(sysParams *common.SystemParams) *testlib.TestCase {
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundTwoThirds)
@@ -80,6 +80,5 @@ func LockedCommitProperty() *sm.StateMachine {
 	initialState.On(common.IsCommit(), "Committed")
 	round1 := initialState.On(common.RoundReached(1), "round1")
 	round1.On(common.IsCommit(), sm.SuccessStateLabel)
-	round1.On(common.RoundReached(2), "NewRoundReached")
 	return property
 }

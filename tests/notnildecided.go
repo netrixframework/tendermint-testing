@@ -1,4 +1,4 @@
-package invariant
+package tests
 
 import (
 	"time"
@@ -8,7 +8,7 @@ import (
 	"github.com/netrixframework/tendermint-testing/common"
 )
 
-func NotNilDecide(sp *common.SystemParams) *testlib.TestCase {
+func NotNilDecideTest(sp *common.SystemParams) *testlib.TestCase {
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(
 		testlib.If(

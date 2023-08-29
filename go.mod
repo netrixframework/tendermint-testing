@@ -2,12 +2,13 @@ module github.com/netrixframework/tendermint-testing
 
 go 1.18
 
+replace github.com/netrixframework/netrix v0.2.9 => /Users/srinidhin/Local/go/src/github.com/netrixframework/netrix
+
 require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/netrixframework/netrix v0.2.9
 	github.com/spf13/cobra v1.3.0
 	github.com/tendermint/tendermint v0.34.10
-	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 )
 
 require (
@@ -30,6 +31,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/btree v1.0.0 // indirect
+	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
@@ -56,10 +58,10 @@ require (
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
+	golang.org/x/exp v0.0.0-20220428152302-39d4317da171 // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
 	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 	golang.org/x/text v0.3.7 // indirect
-	gonum.org/v1/gonum v0.11.0 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
 	google.golang.org/grpc v1.42.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect

@@ -1,4 +1,4 @@
-package rskip
+package tests
 
 import (
 	"time"
@@ -9,7 +9,7 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func RoundSkip(sysParams *common.SystemParams, height, round int) *testlib.TestCase {
+func RoundSkipTest(sysParams *common.SystemParams, height, round int) *testlib.TestCase {
 	stateMachine := RoundSkipProperty()
 
 	filters := testlib.NewFilterSet()

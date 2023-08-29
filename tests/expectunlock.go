@@ -1,4 +1,4 @@
-package lockedvalue
+package tests
 
 import (
 	"time"
@@ -9,7 +9,7 @@ import (
 	"github.com/netrixframework/tendermint-testing/util"
 )
 
-func ExpectUnlock(sysParams *common.SystemParams) *testlib.TestCase {
+func ExpectUnlockTest(sysParams *common.SystemParams) *testlib.TestCase {
 
 	filters := testlib.NewFilterSet()
 	filters.AddFilter(common.TrackRoundAll)
